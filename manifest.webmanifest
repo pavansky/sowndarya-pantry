@@ -1,0 +1,12 @@
+{
+  "name": "Sowndarya's Pantry",
+  "short_name": "Pantry",
+  "description": "Family pantry stock, healthy meals & grocery orders",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#2e7d32",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
