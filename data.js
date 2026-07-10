@@ -6199,3 +6199,112 @@ window.COACH_TIPS = [
  "🥛 Add a katori of thick dal or curd to any rice — protein flattens the sugar curve.",
  "🌾 Rotate millets across the week (foxtail, ragi, bajra, kodo) for a fuller mineral profile."
 ];
+window.REWARDS = {
+ "points": [
+  {
+   "key": "log_real_meal_photo",
+   "label": "Logged a real meal",
+   "points": 10,
+   "cap": 3
+  },
+  {
+   "key": "cook_healthy_dish",
+   "label": "Cooked a healthy dish",
+   "points": 20,
+   "cap": 2
+  },
+  {
+   "key": "whole_grain_swap",
+   "label": "Millet / whole-grain swap",
+   "points": 15,
+   "cap": 1
+  },
+  {
+   "key": "hit_protein_goal",
+   "label": "Hit your protein goal",
+   "points": 25,
+   "cap": 1
+  },
+  {
+   "key": "hit_fiber_goal",
+   "label": "Hit your fiber goal",
+   "points": 25,
+   "cap": 1
+  }
+ ],
+ "streak": {
+  "dailyLogBonus": 5,
+  "note": "Your total healthy days — non-consecutive, never resets. Rest days are healthy."
+ },
+ "levels": [
+  {
+   "name": "Sprout",
+   "minPoints": 0
+  },
+  {
+   "name": "Home Cook",
+   "minPoints": 150
+  },
+  {
+   "name": "Balanced Thali",
+   "minPoints": 400
+  },
+  {
+   "name": "Millet Mindful",
+   "minPoints": 800
+  },
+  {
+   "name": "Dal Master",
+   "minPoints": 1400
+  },
+  {
+   "name": "Fiber Champion",
+   "minPoints": 2200
+  },
+  {
+   "name": "Poshan Guru",
+   "minPoints": 3200
+  },
+  {
+   "name": "Nourish Sage",
+   "minPoints": 4500
+  }
+ ],
+ "badges": [
+  {
+   "key": "first_real_meal",
+   "emoji": "🍽️",
+   "label": "First meal",
+   "metric": "logs",
+   "threshold": 1
+  },
+  {
+   "key": "home_cook",
+   "emoji": "🍲",
+   "label": "Cooked 5",
+   "metric": "cooked",
+   "threshold": 5
+  },
+  {
+   "key": "millet_convert",
+   "emoji": "🌾",
+   "label": "10 millet swaps",
+   "metric": "millet",
+   "threshold": 10
+  },
+  {
+   "key": "home_chef",
+   "emoji": "👩‍🍳",
+   "label": "Cooked 20",
+   "metric": "cooked",
+   "threshold": 20
+  },
+  {
+   "key": "steady_eater",
+   "emoji": "🧘",
+   "label": "30 healthy days",
+   "metric": "days",
+   "threshold": 30
+  }
+ ]
+};

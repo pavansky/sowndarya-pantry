@@ -111,12 +111,39 @@ const coach = [
   "🌾 Rotate millets across the week (foxtail, ragi, bajra, kodo) for a fuller mineral profile."
 ];
 
+// Rewards spec — from the verified "healthy-rewards-design" workflow, with the audit's
+// disordered-eating fixes applied: hard daily caps, no mindful-check-in badge, badges are
+// lifetime milestones (no weekly deadline), no level decay, additive framing only.
+const rewards = {
+  points: [
+    {key:"log_real_meal_photo", label:"Logged a real meal", points:10, cap:3},
+    {key:"cook_healthy_dish",   label:"Cooked a healthy dish", points:20, cap:2},
+    {key:"whole_grain_swap",    label:"Millet / whole-grain swap", points:15, cap:1},
+    {key:"hit_protein_goal",    label:"Hit your protein goal", points:25, cap:1},
+    {key:"hit_fiber_goal",      label:"Hit your fiber goal", points:25, cap:1}
+  ],
+  streak: {dailyLogBonus:5, note:"Your total healthy days — non-consecutive, never resets. Rest days are healthy."},
+  levels: [
+    {name:"Sprout", minPoints:0}, {name:"Home Cook", minPoints:150}, {name:"Balanced Thali", minPoints:400},
+    {name:"Millet Mindful", minPoints:800}, {name:"Dal Master", minPoints:1400}, {name:"Fiber Champion", minPoints:2200},
+    {name:"Poshan Guru", minPoints:3200}, {name:"Nourish Sage", minPoints:4500}
+  ],
+  badges: [
+    {key:"first_real_meal", emoji:"🍽️", label:"First meal", metric:"logs", threshold:1},
+    {key:"home_cook", emoji:"🍲", label:"Cooked 5", metric:"cooked", threshold:5},
+    {key:"millet_convert", emoji:"🌾", label:"10 millet swaps", metric:"millet", threshold:10},
+    {key:"home_chef", emoji:"👩‍🍳", label:"Cooked 20", metric:"cooked", threshold:20},
+    {key:"steady_eater", emoji:"🧘", label:"30 healthy days", metric:"days", threshold:30}
+  ]
+};
+
 const out =
 "// AUTO-GENERATED from verified research workflows (regenerate via: node gen_data.js)\n"+
 "window.HEALTHY_DISHES = "+JSON.stringify(dishes,null,1)+";\n"+
 "window.PANTRY_SEED = "+JSON.stringify(pantry,null,1)+";\n"+
 "window.HEALTH = "+JSON.stringify(health,null,1)+";\n"+
-"window.COACH_TIPS = "+JSON.stringify(coach,null,1)+";\n";
+"window.COACH_TIPS = "+JSON.stringify(coach,null,1)+";\n"+
+"window.REWARDS = "+JSON.stringify(rewards,null,1)+";\n";
 fs.writeFileSync(path.join(__dirname, "data.js"), out);
 console.log("data.js written:", dishes.length, "dishes,", pantry.length, "pantry items");
 console.log("cuisines:", JSON.stringify(cuisineCounts));

@@ -251,8 +251,8 @@ function doCook(){
   });
   S.log.push({ts:new Date().toLocaleString(), dish:d.name, people:n});
   ensureModel();
-  if(d.healthy) award('cook_healthy',true);
-  if(d.swapsFor || (d.tags||[]).some(t=>/millet|low-gi|low-glycemic/i.test(t))) award('millet_swap',true);
+  if(d.healthy) award('cook_healthy_dish',true);
+  if(d.swapsFor || (d.tags||[]).some(t=>/millet|low-gi|low-glycemic/i.test(t))) award('whole_grain_swap',true);
   autoRestock(); save();
   toast(`✅ Made ${d.name} · +points earned 🌟`);
   go('pantry');
@@ -307,7 +307,6 @@ function renderMeals(){
       <small style="color:var(--mut)">from the 3 meals below</small></div>
     ${bar('💪 Protein', tot.p, TARGET.protein_g, 'g', true)}
     ${bar('🌾 Fiber',   tot.f, TARGET.fiber_g, 'g', true)}
-    ${bar('🔥 Calories',tot.k, TARGET.kcal, '', false)}
     <small style="color:var(--mut)">${tot.p>=TARGET.protein_g&&tot.f>=TARGET.fiber_g?'✅ Great balance today':'Add a protein snack or ↺ swap a meal to hit protein + fiber goals'}</small></div>`;
 
   // rotating health coaching tip (verified, highest-leverage)
@@ -390,42 +389,48 @@ async function pickDishImage(inp){ const f=inp.files&&inp.files[0]; if(!f) retur
 // ---------- TRACK: meal journal + points/rewards (verified spec loads from data.js) ----------
 const RW = window.REWARDS || {
   points:[
-    {key:"log_meal",label:"Logged a meal",points:10},
-    {key:"photo",label:"Added a photo",points:5},
-    {key:"cook_healthy",label:"Cooked a healthy dish",points:25},
-    {key:"millet_swap",label:"Chose a low-GI swap",points:10}
+    {key:"log_real_meal_photo",label:"Logged a meal",points:10,cap:3},
+    {key:"cook_healthy_dish",label:"Cooked a healthy dish",points:20,cap:2},
+    {key:"whole_grain_swap",label:"Millet/whole-grain swap",points:15,cap:1}
   ],
-  streak:{dailyLogBonus:5,note:"Log a meal each day to keep your streak."},
-  levels:[{name:"Sprout",minPoints:0},{name:"Seedling",minPoints:100},{name:"Sapling",minPoints:300},{name:"Tree",minPoints:700},{name:"Grove",minPoints:1500}],
+  streak:{dailyLogBonus:5,note:"Your total healthy days — never resets."},
+  levels:[{name:"Sprout",minPoints:0},{name:"Home Cook",minPoints:150},{name:"Balanced Thali",minPoints:400}],
   badges:[
-    {key:"first_log",emoji:"📸",label:"First meal",metric:"logs",threshold:1},
-    {key:"ten_logs",emoji:"🍱",label:"10 meals",metric:"logs",threshold:10},
-    {key:"cook5",emoji:"👩‍🍳",label:"Cooked 5",metric:"cooked",threshold:5},
-    {key:"week_streak",emoji:"🔥",label:"7-day streak",metric:"streak",threshold:7},
-    {key:"points500",emoji:"🌿",label:"500 pts",metric:"points",threshold:500}
+    {key:"first_real_meal",emoji:"🍽️",label:"First meal",metric:"logs",threshold:1},
+    {key:"home_cook",emoji:"🍲",label:"Cooked 5",metric:"cooked",threshold:5},
+    {key:"steady_eater",emoji:"🧘",label:"30 healthy days",metric:"days",threshold:30}
   ]
 };
-function ensureModel(){ if(!S.journal)S.journal=[]; if(S.points==null)S.points=0; if(!S.badges)S.badges=[]; }
+function ensureModel(){ if(!S.journal)S.journal=[]; if(S.points==null)S.points=0; if(!S.badges)S.badges=[]; if(!S.awards)S.awards={}; if(!S.counters)S.counters={}; }
 function ptFor(key){ const p=RW.points.find(x=>x.key===key); return p?p.points:0; }
-function award(key,silent){ const p=RW.points.find(x=>x.key===key); if(!p)return; S.points=(S.points||0)+p.points;
-  if(!silent) toast(`+${p.points} · ${p.label} 🌟`); checkBadges(); }
+// hard per-day cap per action is the primary anti-farming rule; counters track lifetime milestones
+function award(key,silent){ const p=RW.points.find(x=>x.key===key); if(!p)return false; ensureModel();
+  const day=todayKey(); S.awards[day]=S.awards[day]||{};
+  if((S.awards[day][key]||0) >= (p.cap||99)) return false;                 // daily cap reached → no points
+  S.awards[day][key]=(S.awards[day][key]||0)+1; S.counters[key]=(S.counters[key]||0)+1;
+  S.points=(S.points||0)+p.points; if(!silent) toast(`+${p.points} · ${p.label} 🌟`); checkBadges(); return true; }
 function todayKey(){ return new Date().toISOString().slice(0,10); }
 function levelInfo(){ const p=S.points||0; let cur=RW.levels[0], next=null;
   RW.levels.forEach((L,i)=>{ if(p>=L.minPoints){ cur=L; next=RW.levels[i+1]||null; }});
   const span=next?next.minPoints-cur.minPoints:1, into=p-cur.minPoints;
   return {cur,next,pct:next?Math.min(100,Math.round(into/span*100)):100}; }
-function streakDays(){ const days=new Set((S.journal||[]).map(j=>j.date)); let n=0,d=new Date();
-  for(;n<=366;){ const k=d.toISOString().slice(0,10); if(days.has(k)){ n++; d.setDate(d.getDate()-1);} else break; } return n; }
-function metricVal(m){ const j=S.journal||[]; return m==="logs"?j.length:m==="cooked"?(S.log||[]).length:m==="streak"?streakDays():m==="points"?(S.points||0):0; }
+// forgiving consistency: total distinct healthy days, non-consecutive, never resets (no streak anxiety)
+function healthyDays(){ return new Set((S.journal||[]).map(j=>j.date)).size; }
+function metricVal(m){ const j=S.journal||[], c=S.counters||{};
+  return m==="logs"?(c.log_real_meal_photo||j.length)
+    : m==="cooked"?(c.cook_healthy_dish||(S.log||[]).length)
+    : m==="millet"?(c.whole_grain_swap||0)
+    : m==="days"? new Set(j.map(x=>x.date)).size
+    : m==="points"?(S.points||0):0; }
 function checkBadges(){ S.badges=S.badges||[]; (RW.badges||[]).forEach(b=>{ if(!S.badges.includes(b.key)&&metricVal(b.metric)>=b.threshold){ S.badges.push(b.key); toast(`🏅 Badge: ${b.label}`); }}); }
 
 function renderTrack(){
   ensureModel();
   document.getElementById('sub').textContent = "Track meals · earn healthy points";
-  const li=levelInfo(), st=streakDays(), j=[...S.journal].reverse();
+  const li=levelInfo(), st=healthyDays(), j=[...S.journal].reverse();
   let h=`<div class="card" style="background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;border:none">
     <div class="row sb"><div><div style="font-size:34px;font-weight:800;line-height:1">${S.points||0}<span style="font-size:15px;font-weight:600;opacity:.85"> pts</span></div>
-      <div style="opacity:.92;margin-top:4px">🌱 ${esc(li.cur.name)}${st?` · 🔥 ${st}-day streak`:''}</div></div>
+      <div style="opacity:.92;margin-top:4px">🌱 ${esc(li.cur.name)}${st?` · 🌿 ${st} healthy day${st>1?'s':''}`:''}</div></div>
       <button class="sm" style="background:rgba(255,255,255,.25);color:#fff" onclick="logMeal()">📸 Log meal</button></div>
     ${li.next?`<div class="bar" style="background:rgba(255,255,255,.3);margin-top:12px"><i style="width:${li.pct}%;background:#fff"></i></div>
       <small style="opacity:.9">${li.next.minPoints-(S.points||0)} pts to ${esc(li.next.name)}</small>`:'<small style="opacity:.9">Top level 🌳</small>'}</div>`;
@@ -467,7 +472,7 @@ function saveMealLog(){
   ensureModel();
   const e={id:id(), ts:new Date().toISOString(), date:todayKey(), meal:val('logMealSel'), note:val('logNote').trim(), photo:window._log.photo||""};
   const firstToday=!S.journal.some(x=>x.date===e.date);
-  S.journal.push(e); award('log_meal'); if(e.photo) award('photo',true);
+  S.journal.push(e); award('log_real_meal_photo');
   if(firstToday && RW.streak) S.points+=RW.streak.dailyLogBonus;
   checkBadges(); save(); closeDlg(); go('track');
 }
