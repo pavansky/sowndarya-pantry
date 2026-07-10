@@ -88,6 +88,7 @@
 
 <nav>
   <button data-tab="meals" class="on" onclick="go('meals')"><span class="ic">🥗</span>Today</button>
+  <button data-tab="track" onclick="go('track')"><span class="ic">📈</span>Track</button>
   <button data-tab="cook" onclick="go('cook')"><span class="ic">🍳</span>Cook</button>
   <button data-tab="pantry" onclick="go('pantry')"><span class="ic">🥫</span>Pantry</button>
   <button data-tab="shop" onclick="go('shop')" style="position:relative"><span class="ic">🛒</span>Order<span class="badge" id="shopBadge" style="display:none">0</span></button>
@@ -144,7 +145,7 @@ function autoRestock(){
 // ---------- routing ----------
 let TAB = "pantry";
 function go(tab){ TAB=tab; document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===tab)); render(); }
-function render(){ ({pantry:renderPantry, cook:renderCook, meals:renderMeals, shop:renderShop}[TAB])(); refreshBadge(); }
+function render(){ ensureModel(); ({pantry:renderPantry, cook:renderCook, meals:renderMeals, shop:renderShop, track:renderTrack}[TAB])(); refreshBadge(); }
 
 // ---------- PANTRY ----------
 function renderPantry(){
@@ -249,8 +250,11 @@ function doCook(){
     p.qty = Math.max(0, fmt(p.qty - need));
   });
   S.log.push({ts:new Date().toLocaleString(), dish:d.name, people:n});
+  ensureModel();
+  if(d.healthy) award('cook_healthy',true);
+  if(d.swapsFor || (d.tags||[]).some(t=>/millet|low-gi|low-glycemic/i.test(t))) award('millet_swap',true);
   autoRestock(); save();
-  toast(`✅ Made ${d.name} for ${n}. Pantry updated.`);
+  toast(`✅ Made ${d.name} · +points earned 🌟`);
   go('pantry');
 }
 
@@ -383,6 +387,91 @@ async function pickDishImage(inp){ const f=inp.files&&inp.files[0]; if(!f) retur
   if(url){ window._img=url; const t=document.getElementById('dishThumb'); if(t) t.innerHTML=`<img src="${esc(url)}">`; toast("Photo added"); }
 }
 
+// ---------- TRACK: meal journal + points/rewards (verified spec loads from data.js) ----------
+const RW = window.REWARDS || {
+  points:[
+    {key:"log_meal",label:"Logged a meal",points:10},
+    {key:"photo",label:"Added a photo",points:5},
+    {key:"cook_healthy",label:"Cooked a healthy dish",points:25},
+    {key:"millet_swap",label:"Chose a low-GI swap",points:10}
+  ],
+  streak:{dailyLogBonus:5,note:"Log a meal each day to keep your streak."},
+  levels:[{name:"Sprout",minPoints:0},{name:"Seedling",minPoints:100},{name:"Sapling",minPoints:300},{name:"Tree",minPoints:700},{name:"Grove",minPoints:1500}],
+  badges:[
+    {key:"first_log",emoji:"📸",label:"First meal",metric:"logs",threshold:1},
+    {key:"ten_logs",emoji:"🍱",label:"10 meals",metric:"logs",threshold:10},
+    {key:"cook5",emoji:"👩‍🍳",label:"Cooked 5",metric:"cooked",threshold:5},
+    {key:"week_streak",emoji:"🔥",label:"7-day streak",metric:"streak",threshold:7},
+    {key:"points500",emoji:"🌿",label:"500 pts",metric:"points",threshold:500}
+  ]
+};
+function ensureModel(){ if(!S.journal)S.journal=[]; if(S.points==null)S.points=0; if(!S.badges)S.badges=[]; }
+function ptFor(key){ const p=RW.points.find(x=>x.key===key); return p?p.points:0; }
+function award(key,silent){ const p=RW.points.find(x=>x.key===key); if(!p)return; S.points=(S.points||0)+p.points;
+  if(!silent) toast(`+${p.points} · ${p.label} 🌟`); checkBadges(); }
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+function levelInfo(){ const p=S.points||0; let cur=RW.levels[0], next=null;
+  RW.levels.forEach((L,i)=>{ if(p>=L.minPoints){ cur=L; next=RW.levels[i+1]||null; }});
+  const span=next?next.minPoints-cur.minPoints:1, into=p-cur.minPoints;
+  return {cur,next,pct:next?Math.min(100,Math.round(into/span*100)):100}; }
+function streakDays(){ const days=new Set((S.journal||[]).map(j=>j.date)); let n=0,d=new Date();
+  for(;n<=366;){ const k=d.toISOString().slice(0,10); if(days.has(k)){ n++; d.setDate(d.getDate()-1);} else break; } return n; }
+function metricVal(m){ const j=S.journal||[]; return m==="logs"?j.length:m==="cooked"?(S.log||[]).length:m==="streak"?streakDays():m==="points"?(S.points||0):0; }
+function checkBadges(){ S.badges=S.badges||[]; (RW.badges||[]).forEach(b=>{ if(!S.badges.includes(b.key)&&metricVal(b.metric)>=b.threshold){ S.badges.push(b.key); toast(`🏅 Badge: ${b.label}`); }}); }
+
+function renderTrack(){
+  ensureModel();
+  document.getElementById('sub').textContent = "Track meals · earn healthy points";
+  const li=levelInfo(), st=streakDays(), j=[...S.journal].reverse();
+  let h=`<div class="card" style="background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;border:none">
+    <div class="row sb"><div><div style="font-size:34px;font-weight:800;line-height:1">${S.points||0}<span style="font-size:15px;font-weight:600;opacity:.85"> pts</span></div>
+      <div style="opacity:.92;margin-top:4px">🌱 ${esc(li.cur.name)}${st?` · 🔥 ${st}-day streak`:''}</div></div>
+      <button class="sm" style="background:rgba(255,255,255,.25);color:#fff" onclick="logMeal()">📸 Log meal</button></div>
+    ${li.next?`<div class="bar" style="background:rgba(255,255,255,.3);margin-top:12px"><i style="width:${li.pct}%;background:#fff"></i></div>
+      <small style="opacity:.9">${li.next.minPoints-(S.points||0)} pts to ${esc(li.next.name)}</small>`:'<small style="opacity:.9">Top level 🌳</small>'}</div>`;
+
+  h+=`<div class="card"><h2>Badges</h2><div style="display:flex;flex-wrap:wrap;gap:6px">`;
+  (RW.badges||[]).forEach(b=>{ const got=(S.badges||[]).includes(b.key);
+    h+=`<div style="text-align:center;width:70px;opacity:${got?1:.32}"><div style="font-size:28px">${b.emoji}</div>
+      <small style="font-size:10px;color:var(--mut)">${esc(b.label)}</small></div>`; });
+  h+=`</div></div>`;
+
+  h+=`<div class="card"><div class="row sb"><h2>Meal journal</h2><button class="sm p" onclick="logMeal()">＋ Log</button></div>`;
+  if(!j.length) h+=`<div class="empty">No meals logged yet.<br><small>Snap what you ate to track it and earn points 🌟</small></div>`;
+  else{ h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">`;
+    j.slice(0,40).forEach(e=>{ h+=`<div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">
+      ${e.photo?`<img src="${esc(e.photo)}" style="width:100%;height:108px;object-fit:cover">`:`<div style="height:108px;background:var(--g2);display:flex;align-items:center;justify-content:center;font-size:32px">🍽️</div>`}
+      <div style="padding:7px 9px"><b style="font-size:13px;text-transform:capitalize">${esc(e.meal||'meal')}</b>
+        <div><small style="color:var(--mut)">${esc(e.date)}${e.note?' · '+esc(e.note):''}</small></div></div></div>`; });
+    h+=`</div>`; }
+  h+=`</div>`;
+  document.getElementById('view').innerHTML=h;
+}
+function logMeal(){ window._log={photo:"",meal:"lunch",note:""}; renderLogDlg(); }
+function renderLogDlg(){
+  const meals=["breakfast","lunch","dinner","snack"];
+  dlg(`<h2>📸 Log a meal</h2>
+    <div class="row" style="gap:10px;align-items:center">
+      <div class="thumb" id="logThumb" style="width:72px;height:72px;font-size:30px">${window._log.photo?`<img src="${esc(window._log.photo)}">`:'📷'}</div>
+      <div><input type="file" accept="image/*" capture="environment" onchange="pickLogPhoto(this)" style="border:none;padding:6px 0">
+      <div style="font-size:11px;color:var(--mut)">Photo optional (+${ptFor('photo')} pts)</div></div></div>
+    <div class="fld" style="margin-top:10px"><label>Which meal?</label>
+      <select id="logMealSel">${meals.map(m=>`<option ${m===window._log.meal?'selected':''}>${m}</option>`).join('')}</select></div>
+    <div class="fld"><label>Note (optional)</label><input id="logNote" value="${esc(window._log.note)}" placeholder="e.g. ragi dosa + sambar"></div>
+    <div class="row sb" style="margin-top:8px"><span style="font-size:12px;color:var(--mut)">Earns +${ptFor('log_meal')} pts</span>
+      <div class="row"><button class="g" onclick="closeDlg()">Cancel</button><button class="p" onclick="saveMealLog()">Save</button></div></div>`);
+}
+async function pickLogPhoto(inp){ const f=inp.files&&inp.files[0]; if(!f)return; toast("Uploading…");
+  const url=await uploadImage(f); if(url){ window._log.photo=url; const t=document.getElementById('logThumb'); if(t)t.innerHTML=`<img src="${esc(url)}">`; } }
+function saveMealLog(){
+  ensureModel();
+  const e={id:id(), ts:new Date().toISOString(), date:todayKey(), meal:val('logMealSel'), note:val('logNote').trim(), photo:window._log.photo||""};
+  const firstToday=!S.journal.some(x=>x.date===e.date);
+  S.journal.push(e); award('log_meal'); if(e.photo) award('photo',true);
+  if(firstToday && RW.streak) S.points+=RW.streak.dailyLogBonus;
+  checkBadges(); save(); closeDlg(); go('track');
+}
+
 // ---------- SHOP / ORDER ----------
 function renderShop(){
   const active = S.shop.filter(s=>!s.checked), done = S.shop.filter(s=>s.checked);
@@ -421,7 +510,7 @@ function shareOrder(){
 }
 
 // ---------- FAB / dialogs ----------
-function fabAction(){ if(TAB==='cook'||TAB==='meals') addDish(); else if(TAB==='shop') addShopItem(); else editItem(null); }
+function fabAction(){ if(TAB==='track') logMeal(); else if(TAB==='cook'||TAB==='meals') addDish(); else if(TAB==='shop') addShopItem(); else editItem(null); }
 
 function editItem(pid){
   const p = pid? S.pantry.find(x=>x.id===pid) : null;
@@ -517,8 +606,34 @@ function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 const CFG_KEY = "pantry.sync";
 let CFG = JSON.parse(localStorage.getItem(CFG_KEY) || "null") || {url:"",key:"",house:"home",tgToken:"",tgChat:"",cloudName:"",uploadPreset:""};
 let pushT;
-function sbHeaders(){ return {apikey:CFG.key, Authorization:"Bearer "+CFG.key, "Content-Type":"application/json"}; }
+// ---- account session (Supabase Auth). Signed-in => private per-user row; else shared household row ----
+let SESSION = null; try{ SESSION = JSON.parse(localStorage.getItem('pantry.session')||'null'); }catch(e){}
+function sbHeaders(){ const auth = SESSION ? SESSION.token : CFG.key; return {apikey:CFG.key, Authorization:"Bearer "+auth, "Content-Type":"application/json"}; }
 function syncOn(){ return CFG.url && CFG.key; }
+function syncTable(){ return SESSION ? {t:"user_state", k:"user_id", id:SESSION.uid} : {t:"state", k:"id", id:CFG.house}; }
+function captureOAuth(){
+  if(location.hash && location.hash.indexOf('access_token')>-1){
+    const p=new URLSearchParams(location.hash.slice(1)); const t=p.get('access_token');
+    if(t) setSession(t, p.get('refresh_token'));
+    history.replaceState(null,'',location.pathname);
+  }
+}
+function setSession(token, refresh){
+  try{ const c=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+    SESSION={token, refresh, uid:c.sub, email:c.email}; localStorage.setItem('pantry.session',JSON.stringify(SESSION));
+    toast('✅ Signed in as '+(SESSION.email||'you')); setDot('ok'); pullState(true);
+  }catch(e){ toast('Sign-in failed'); }
+}
+function signOut(){ SESSION=null; localStorage.removeItem('pantry.session'); toast('Signed out'); setDot('ok'); }
+function oauth(provider){ if(!syncOn()) return toast('Add Supabase in ⚙ first');
+  location.href=`${CFG.url}/auth/v1/authorize?provider=${provider}&redirect_to=${encodeURIComponent(location.origin+'/app.html')}`; }
+async function emailLink(){ const email=(document.getElementById('authEmail')||{}).value; if(!email||!email.trim()) return toast('Enter your email');
+  if(!syncOn()) return toast('Add Supabase in ⚙ first');
+  try{ const r=await fetch(`${CFG.url}/auth/v1/otp?redirect_to=${encodeURIComponent(location.origin+'/app.html')}`,
+    {method:'POST', headers:{apikey:CFG.key,'Content-Type':'application/json'}, body:JSON.stringify({email:email.trim(), create_user:true})});
+    toast(r.ok?'📧 Check your email for the sign-in link':'Could not send link'); }
+  catch(e){ toast('Failed — offline?'); }
+}
 function setDot(state){ // idle ✓ / syncing … / off ⚙︎ / error ⚠
   document.getElementById('syncDot').textContent = !syncOn()?'⚙︎':{sync:'…',ok:'✓',err:'⚠'}[state]||'☁︎';
 }
@@ -528,9 +643,11 @@ async function pushState(){
   pushT = setTimeout(async()=>{
     setDot('sync');
     try{
-      const body=[{id:CFG.house, data:S, updated_at:new Date().toISOString()}];
-      const r=await fetch(`${CFG.url}/rest/v1/state?on_conflict=id`,{method:"POST",
-        headers:{...sbHeaders(), Prefer:"resolution=merge-duplicates"}, body:JSON.stringify(body)});
+      const T=syncTable();
+      const row = SESSION ? {user_id:SESSION.uid, data:S, updated_at:new Date().toISOString()}
+                          : {id:CFG.house, data:S, updated_at:new Date().toISOString()};
+      const r=await fetch(`${CFG.url}/rest/v1/${T.t}?on_conflict=${T.k}`,{method:"POST",
+        headers:{...sbHeaders(), Prefer:"resolution=merge-duplicates"}, body:JSON.stringify([row])});
       setDot(r.ok?'ok':'err');
     }catch(e){ setDot('err'); }
   }, 800);
@@ -539,7 +656,8 @@ async function pullState(force){
   if(!syncOn()) return;
   setDot('sync');
   try{
-    const r=await fetch(`${CFG.url}/rest/v1/state?id=eq.${encodeURIComponent(CFG.house)}&select=data,updated_at`,{headers:sbHeaders()});
+    const T=syncTable();
+    const r=await fetch(`${CFG.url}/rest/v1/${T.t}?${T.k}=eq.${encodeURIComponent(T.id)}&select=data,updated_at`,{headers:sbHeaders()});
     const rows=await r.json();
     if(Array.isArray(rows)&&rows[0]&&rows[0].data){
       const remote=rows[0].updated_at||"", localT=S._t||"";
@@ -556,8 +674,20 @@ function settings(){
   const sql = "create table if not exists state (id text primary key, data jsonb, updated_at timestamptz);\n"+
               "alter table state enable row level security;\n"+
               "create policy anon_all on state for all to anon using (true) with check (true);";
-  dlg(`<h2>☁︎ Sync &amp; setup</h2>
-    <p style="font-size:13px;color:var(--mut);margin-top:0">Share one pantry across Sowndarya's iPad/iPhone and Pavan's Pixel. Free via Supabase.</p>
+  dlg(`<h2>👤 Account &amp; sync</h2>
+    ${SESSION
+      ? `<div class="card" style="margin:0 0 14px;background:var(--g2);border:none"><b>✅ Signed in</b><br><small>${esc(SESSION.email||'your account')}</small>
+          <div style="margin-top:8px"><button class="sm g" onclick="signOut();closeDlg()">Sign out</button></div></div>`
+      : `<div style="margin-bottom:14px"><b>Sign in / Sign up — free</b>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <button class="g" onclick="oauth('google')">🔵 Continue with Google</button>
+            <button class="g" onclick="oauth('facebook')">🔷 Continue with Facebook</button>
+            <button class="g" onclick="oauth('apple')"> Continue with Apple</button>
+          </div>
+          <div class="row" style="gap:6px;margin-top:8px"><input id="authEmail" placeholder="you@email.com" style="flex:1"><button class="p" onclick="emailLink()">Email link</button></div>
+          <p style="font-size:11px;color:var(--mut);margin:6px 0 0">Free account — syncs your pantry, meals &amp; points privately across devices.</p></div>`}
+    <hr style="border:none;border-top:1px solid var(--line);margin:0 0 14px">
+    <p style="font-size:13px;color:var(--mut);margin-top:0">Advanced: connect your own Supabase project to self-host data.</p>
     <div class="fld"><label>Supabase Project URL</label><input id="cUrl" value="${esc(CFG.url)}" placeholder="https://xxxx.supabase.co"></div>
     <div class="fld"><label>Supabase anon key</label><input id="cKey" value="${esc(CFG.key)}" placeholder="eyJhbGciOi..."></div>
     <div class="fld"><label>Household code (same on all devices)</label><input id="cHouse" value="${esc(CFG.house)}"></div>
@@ -610,6 +740,7 @@ function importData(){ const i=document.createElement('input'); i.type="file"; i
   i.onchange=e=>{ const f=e.target.files[0]; const rd=new FileReader(); rd.onload=()=>{ try{ S=JSON.parse(rd.result); save(); render(); toast("Imported"); closeDlg(); }catch(x){ toast("Bad file"); } }; rd.readAsText(f); }; i.click(); }
 
 // ---------- boot ----------
+captureOAuth();
 autoRestock(); _save(); go('meals'); setDot('ok');
 if(syncOn()) pullState();
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) pullState(); });
