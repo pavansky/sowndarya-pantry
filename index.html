@@ -49,6 +49,8 @@
   .chips::-webkit-scrollbar{display:none}
   .chip{flex:0 0 auto;background:#fff;border:1px solid var(--line);color:var(--txt);font-size:13px;font-weight:600;padding:7px 14px;border-radius:20px;min-height:auto;white-space:nowrap}
   .chip.on{background:var(--g);color:#fff;border-color:var(--g)}
+  .thumb{width:52px;height:52px;border-radius:50%;background:var(--g2);display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden;flex:0 0 auto;cursor:pointer}
+  .thumb img{width:100%;height:100%;object-fit:cover}
   .badge{background:var(--red);color:#fff;border-radius:20px;font-size:11px;padding:1px 6px;position:absolute;top:4px;right:calc(50% - 26px)}
   .empty{text-align:center;color:var(--mut);padding:30px 10px}
   .meal{border-left:4px solid var(--g);padding:8px 12px;margin-bottom:8px;background:var(--g2);border-radius:0 10px 10px 0}
@@ -322,7 +324,9 @@ function renderMeals(){
     h+=`<div class="card">
       <div class="row sb"><small style="color:var(--mut);font-weight:600;letter-spacing:.5px">${icon} ${label.toUpperCase()}${d.cuisine?' · '+esc(d.cuisine):''}</small>
         <button class="sm g" onclick="swapMeal('${m}')">↺ swap</button></div>
-      <div style="font-size:20px;font-weight:700;margin:4px 0"><span title="${d.veg===false?'non-veg':'veg'}" style="font-size:13px">${d.veg===false?'🔴':'🟢'}</span> ${esc(d.name)}</div>
+      <div class="row" style="gap:10px;align-items:center;margin:4px 0">
+        <div class="thumb" onclick="photoForDish('${d.id}')" title="Tap to add a photo">${d.image?`<img src="${esc(d.image)}">`:dishEmoji(d)}</div>
+        <div style="font-size:19px;font-weight:700;flex:1"><span title="${d.veg===false?'non-veg':'veg'}" style="font-size:13px">${d.veg===false?'🔴':'🟢'}</span> ${esc(d.name)}</div></div>
       ${swap}
       <div style="margin-bottom:2px">${tags}</div>
       ${macro}
@@ -354,6 +358,30 @@ function canMake(d,n){
   return {ok:missing.length===0, missing};
 }
 function cookThis(did){ go('cook'); setTimeout(()=>{ document.getElementById('ckDish').value=did; previewCook(); },30); }
+// visual placeholder when a dish has no photo yet
+function dishEmoji(d){
+  const s=(d.name+' '+(d.tags||[]).join(' ')).toLowerCase();
+  const map=[['dosa|adai|chilla|pesarattu|cheela|thalipeeth','🥞'],['idli|dhokla|khaman','🍥'],['egg|bhurji|omelette','🥚'],
+   ['chicken|tandoori','🍗'],['fish','🐟'],['paneer|tofu','🧀'],['salad|kachumber|koshimbir|chaat|raita|kosambari','🥗'],
+   ['soup|rasam|saaru|shukto','🍲'],['curd|yogurt|buttermilk|lassi','🥛'],['roti|bhakri|thepla|paratha|mudde','🫓'],
+   ['millet|ragi|bajra|jowar|foxtail|khichdi|pongal|upma|oats|quinoa|bath','🌾'],
+   ['dal|sambar|kootu|usal|misal|ghugni|rajma|chana|sundal|gram|kollu|rasam','🥘'],['malt|smoothie','🥤']];
+  for(const [re,em] of map) if(new RegExp(re).test(s)) return em;
+  return '🍽️';
+}
+// snap/attach a photo to any dish (uploads to Cloudinary, syncs)
+function photoForDish(did){
+  const d=S.dishes.find(x=>x.id===did); if(!d) return;
+  if(!CFG.cloudName||!CFG.uploadPreset) return toast("Add Cloudinary in ⚙︎ to enable photos");
+  const i=document.createElement('input'); i.type='file'; i.accept='image/*'; i.capture='environment';
+  i.onchange=async e=>{ const f=e.target.files[0]; if(!f) return; toast("Uploading photo…");
+    const url=await uploadImage(f); if(url){ d.image=url; save(); renderMeals(); toast("📷 Photo added"); } };
+  i.click();
+}
+async function pickDishImage(inp){ const f=inp.files&&inp.files[0]; if(!f) return;
+  toast("Uploading photo…"); const url=await uploadImage(f);
+  if(url){ window._img=url; const t=document.getElementById('dishThumb'); if(t) t.innerHTML=`<img src="${esc(url)}">`; toast("Photo added"); }
+}
 
 // ---------- SHOP / ORDER ----------
 function renderShop(){
@@ -433,6 +461,7 @@ function addShopItem(){
 function addDish(){
   window._ing = [{name:"",qty:0,unit:"g"}];
   window._macro = {kcal:0,protein_g:0,fiber_g:0};
+  window._img = "";
   renderDishDlg("", "lunch", true);
 }
 function renderDishDlg(name,meal,healthy){
@@ -445,6 +474,10 @@ function renderDishDlg(name,meal,healthy){
   </div>`).join('');
   dlg(`<h2>New dish</h2>
     <datalist id="pnames">${S.pantry.map(p=>`<option value="${esc(p.name)}">`).join('')}</datalist>
+    <div class="fld"><label>Photo (optional)</label>
+      <div class="row" style="gap:10px;align-items:center">
+        <div class="thumb" id="dishThumb">${window._img?`<img src="${esc(window._img)}">`:'📷'}</div>
+        <input type="file" accept="image/*" onchange="pickDishImage(this)" style="border:none;padding:6px 0"></div></div>
     <div class="fld"><label>Dish name</label><input id="mName" value="${esc(name)}" placeholder="e.g. Ragi Dosa"></div>
     <div class="grid"><div><label>Meal</label><select id="mMeal">${opts(meal)}</select></div>
       <div><label>Healthy?</label><br><input type="checkbox" id="mHealthy" ${healthy?'checked':''} style="width:auto;min-height:auto;transform:scale(1.4)"></div><div></div></div>
@@ -467,7 +500,7 @@ function saveDish(){
   if(!ing.length) return toast("Add at least one ingredient");
   const mc=window._macro||{};
   S.dishes.push({id:id(),name,meal:val('mMeal'),healthy:document.getElementById('mHealthy').checked,ing,
-    kcal:+mc.kcal||0, protein_g:+mc.protein_g||0, fiber_g:+mc.fiber_g||0});
+    kcal:+mc.kcal||0, protein_g:+mc.protein_g||0, fiber_g:+mc.fiber_g||0, image:window._img||"", veg:true});
   save(); closeDlg(); toast("Dish saved"); go('meals');
 }
 
@@ -482,7 +515,7 @@ function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 // ponytail: whole-doc last-write-wins; if two people edit offline at once, newest save wins. Move to
 //           per-field merge only if that actually bites.
 const CFG_KEY = "pantry.sync";
-let CFG = JSON.parse(localStorage.getItem(CFG_KEY) || "null") || {url:"",key:"",house:"home",tgToken:"",tgChat:""};
+let CFG = JSON.parse(localStorage.getItem(CFG_KEY) || "null") || {url:"",key:"",house:"home",tgToken:"",tgChat:"",cloudName:"",uploadPreset:""};
 let pushT;
 function sbHeaders(){ return {apikey:CFG.key, Authorization:"Bearer "+CFG.key, "Content-Type":"application/json"}; }
 function syncOn(){ return CFG.url && CFG.key; }
@@ -535,6 +568,11 @@ function settings(){
       @BotFather → token; message the bot then get chat id.</p>
     <div class="fld"><label>Telegram bot token</label><input id="cTg" value="${esc(CFG.tgToken)}" placeholder="123456:ABC-..."></div>
     <div class="fld"><label>Telegram chat id</label><input id="cChat" value="${esc(CFG.tgChat)}" placeholder="e.g. -1001234567890"></div>
+    <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
+    <p style="font-size:13px;color:var(--mut);margin:0 0 8px">📷 Dish photos (Cloudinary — free, no server).
+      Create an <b>unsigned</b> upload preset; both values are public-safe.</p>
+    <div class="fld"><label>Cloudinary cloud name</label><input id="cCloud" value="${esc(CFG.cloudName)}" placeholder="e.g. sowndarya-kitchen"></div>
+    <div class="fld"><label>Unsigned upload preset</label><input id="cPreset" value="${esc(CFG.uploadPreset)}" placeholder="e.g. pantry_unsigned"></div>
     <details style="margin-top:8px"><summary style="font-size:13px;color:var(--g)">First-time DB setup (run once)</summary>
       <p style="font-size:12px;color:var(--mut)">Supabase → SQL editor → paste &amp; run:</p>
       <textarea readonly rows="4" style="width:100%;font-size:11px;font-family:monospace">${esc(sql)}</textarea></details>
@@ -544,8 +582,16 @@ function settings(){
     <div class="row sb" style="margin-top:14px"><span></span><button class="g" onclick="closeDlg()">Close</button></div>`);
 }
 function saveCfg(){ CFG={url:val('cUrl').trim().replace(/\/$/,''), key:val('cKey').trim(), house:val('cHouse').trim()||"home",
-    tgToken:val('cTg').trim(), tgChat:val('cChat').trim()};
+    tgToken:val('cTg').trim(), tgChat:val('cChat').trim(), cloudName:val('cCloud').trim(), uploadPreset:val('cPreset').trim()};
   localStorage.setItem(CFG_KEY,JSON.stringify(CFG)); closeDlg(); setDot('ok'); pullState().then(pushState); toast("Saved"); }
+// Cloudinary unsigned upload — client-side, no backend, no secret
+async function uploadImage(file){
+  if(!CFG.cloudName||!CFG.uploadPreset){ toast("Set Cloudinary in ⚙︎ first"); return null; }
+  const fd=new FormData(); fd.append('file',file); fd.append('upload_preset',CFG.uploadPreset);
+  try{ const r=await fetch(`https://api.cloudinary.com/v1_1/${CFG.cloudName}/image/upload`,{method:'POST',body:fd});
+    const j=await r.json(); return j.secure_url||null; }
+  catch(e){ toast("Upload failed — offline?"); return null; }
+}
 async function sendTelegram(){
   if(!CFG.tgToken||!CFG.tgChat) return toast("Set Telegram in ⚙︎ first");
   const lines=S.shop.filter(s=>!s.checked).map(s=>`• ${s.name} — ${s.need}${s.unit}`).join('\n');

@@ -45,3 +45,10 @@ So the Order list can push straight to your phone:
 
 Telegram's API allows browser calls, so this needs no backend. (Slack incoming webhooks block browser CORS,
 so they'd need a proxy — that's why Telegram is the default here.)
+
+## Dish photos (optional, free, no server)
+Every dish shows an emoji until you add a photo. To snap real photos:
+1. Create a free [Cloudinary](https://cloudinary.com) account.
+2. Settings → Upload → add an **Unsigned** upload preset; note the preset name and your **cloud name**.
+3. App ⚙ → paste **cloud name** + **preset** → Save. Now tap any dish thumbnail (or the 📷 in the recipe
+   editor) to upload a photo. Both values are public-safe (unsigned uploads), so no secret is committed.
