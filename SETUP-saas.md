@@ -25,3 +25,21 @@ Stage 1 (marketing site + app restructure) is **done and live**. To turn on **ac
 
 The Supabase **anon/publishable** key is safe to ship in the client (security comes from RLS + Auth) —
 so the app will come pre-configured; users just sign up, no key-pasting.
+
+## C. Meal validation & the free-first earn loop (verified plan)
+Model (from the monetization workflow): **the whole app is free**; logging a photo meal that AI-validates
+as healthy earns **premium days** (1/meal, capped **5/week** so it can't be farmed). Premium = AI extras
+(unlimited scans, AI coaching, analytics) at **~₹299/mo** — or ₹0 by earning it. Primary revenue is the
+**AI-freemium subscription**; grocery affiliate is NOT a pillar (India cuts are tiny). B2B employer
+wellness is the long-term pillar, not launch.
+
+**To enable validation:** add `ANTHROPIC_API_KEY` in Vercel env vars. `/api/validate-meal` uses Claude
+vision (Haiku) to return a neutral `band` (healthy / partial / not_a_plate) — reward-gating only.
+
+**Ethical guardrails baked in (from the verification audit — keep them):**
+- Earned Premium is framed as a **bonus you keep**, never a manufactured "loss"; no guilt/countdown copy.
+- Users are **never shown a "junk/unhealthy" label** — a non-healthy meal is just logged, no reward, no shaming.
+- **Streaks are never monetized** (no paid streak-freeze); repair is free.
+- **18+** the earn/scoring mechanics; add an ED-risk off-ramp.
+- Anti-gaming to add server-side before scaling: DB unique (user, meal, day), server timestamp, pHash
+  dedup, reverse-image/AI-image checks on day-earning meals. Strip EXIF/GPS on ingest; short photo retention; DPA with the vision API.

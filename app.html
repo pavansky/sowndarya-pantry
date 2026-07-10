@@ -401,7 +401,26 @@ const RW = window.REWARDS || {
     {key:"steady_eater",emoji:"🧘",label:"30 healthy days",metric:"days",threshold:30}
   ]
 };
-function ensureModel(){ if(!S.journal)S.journal=[]; if(S.points==null)S.points=0; if(!S.badges)S.badges=[]; if(!S.awards)S.awards={}; if(!S.counters)S.counters={}; }
+function ensureModel(){ if(!S.journal)S.journal=[]; if(S.points==null)S.points=0; if(!S.badges)S.badges=[]; if(!S.awards)S.awards={}; if(!S.counters)S.counters={}; if(!S.earned)S.earned={}; if(S.premiumDays==null)S.premiumDays=0; }
+// ----- earn-a-premium-day loop (validated healthy meal → premium days). Positive framing only. -----
+function weekKey(){ const d=new Date(); const off=(d.getDay()+6)%7; d.setDate(d.getDate()-off); return d.toISOString().slice(0,10); }
+async function validateForReward(e){
+  if(!e.photo) return;
+  try{
+    const r=await fetch('/api/validate-meal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imageUrl:e.photo})});
+    const v=await r.json();
+    if(v.configured===false) return;                 // AI validation not enabled yet (no key)
+    if(v.band==='healthy') grantPremiumDay();
+    // partial / not_a_plate / review: meal stays logged, no reward, and NO negative label shown (ED guardrail)
+  }catch(_){}
+}
+function grantPremiumDay(){
+  ensureModel(); const cfg=RW.earnDays||{perMeal:1,weeklyCap:5}, wk=weekKey();
+  if((S.earned[wk]||0) >= cfg.weeklyCap) return;      // weekly cap — anti-farming, silent
+  S.earned[wk]=(S.earned[wk]||0)+cfg.perMeal; S.premiumDays=(S.premiumDays||0)+cfg.perMeal;
+  toast(`🎁 Healthy meal validated — +${cfg.perMeal} premium day! (${S.premiumDays} banked)`);
+  save(); if(TAB==='track') renderTrack();
+}
 function ptFor(key){ const p=RW.points.find(x=>x.key===key); return p?p.points:0; }
 // hard per-day cap per action is the primary anti-farming rule; counters track lifetime milestones
 function award(key,silent){ const p=RW.points.find(x=>x.key===key); if(!p)return false; ensureModel();
@@ -433,7 +452,8 @@ function renderTrack(){
       <div style="opacity:.92;margin-top:4px">🌱 ${esc(li.cur.name)}${st?` · 🌿 ${st} healthy day${st>1?'s':''}`:''}</div></div>
       <button class="sm" style="background:rgba(255,255,255,.25);color:#fff" onclick="logMeal()">📸 Log meal</button></div>
     ${li.next?`<div class="bar" style="background:rgba(255,255,255,.3);margin-top:12px"><i style="width:${li.pct}%;background:#fff"></i></div>
-      <small style="opacity:.9">${li.next.minPoints-(S.points||0)} pts to ${esc(li.next.name)}</small>`:'<small style="opacity:.9">Top level 🌳</small>'}</div>`;
+      <small style="opacity:.9">${li.next.minPoints-(S.points||0)} pts to ${esc(li.next.name)}</small>`:'<small style="opacity:.9">Top level 🌳</small>'}
+    ${(S.premiumDays||0)>0?`<div style="margin-top:10px;background:rgba(255,255,255,.18);border-radius:10px;padding:8px 12px">🎁 <b>${S.premiumDays} premium day${S.premiumDays>1?'s':''}</b> earned — enjoy unlimited AI scans &amp; analytics</div>`:`<div style="margin-top:10px;font-size:12px;opacity:.85">📸 Log a healthy meal with a photo to earn free premium days</div>`}</div>`;
 
   h+=`<div class="card"><h2>Badges</h2><div style="display:flex;flex-wrap:wrap;gap:6px">`;
   (RW.badges||[]).forEach(b=>{ const got=(S.badges||[]).includes(b.key);
@@ -475,6 +495,7 @@ function saveMealLog(){
   S.journal.push(e); award('log_real_meal_photo');
   if(firstToday && RW.streak) S.points+=RW.streak.dailyLogBonus;
   checkBadges(); save(); closeDlg(); go('track');
+  validateForReward(e);   // async: earns a premium day if AI validates it as a healthy meal
 }
 
 // ---------- SHOP / ORDER ----------

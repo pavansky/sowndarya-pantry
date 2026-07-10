@@ -6236,6 +6236,11 @@ window.REWARDS = {
   "dailyLogBonus": 5,
   "note": "Your total healthy days — non-consecutive, never resets. Rest days are healthy."
  },
+ "earnDays": {
+  "perMeal": 1,
+  "weeklyCap": 5,
+  "note": "Log a healthy meal with a photo to earn a premium day — up to 5 a week."
+ },
  "levels": [
   {
    "name": "Sprout",

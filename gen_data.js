@@ -123,6 +123,10 @@ const rewards = {
     {key:"hit_fiber_goal",      label:"Hit your fiber goal", points:25, cap:1}
   ],
   streak: {dailyLogBonus:5, note:"Your total healthy days — non-consecutive, never resets. Rest days are healthy."},
+  // Free-first earn loop (verified monetization workflow + ethics audit): a photo meal validated as
+  // genuinely healthy earns premium days. Positive framing only — no manufactured loss/guilt. Cap
+  // prevents farming a permanent free account. Repair tokens are free; streaks are never monetized.
+  earnDays: {perMeal:1, weeklyCap:5, note:"Log a healthy meal with a photo to earn a premium day — up to 5 a week."},
   levels: [
     {name:"Sprout", minPoints:0}, {name:"Home Cook", minPoints:150}, {name:"Balanced Thali", minPoints:400},
     {name:"Millet Mindful", minPoints:800}, {name:"Dal Master", minPoints:1400}, {name:"Fiber Champion", minPoints:2200},
