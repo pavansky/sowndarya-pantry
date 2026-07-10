@@ -1,8 +1,9 @@
 {
-  "name": "Sowndarya's Pantry",
-  "short_name": "Pantry",
-  "description": "Family pantry stock, healthy meals & grocery orders",
-  "start_url": "./",
+  "name": "Sow's Pantry",
+  "short_name": "Sow's Pantry",
+  "description": "Health-first Indian meal planner with a pantry-aware grocery list",
+  "start_url": "/app.html",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#fafafa",
   "theme_color": "#2e7d32",

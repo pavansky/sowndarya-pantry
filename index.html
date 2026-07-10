@@ -2,630 +2,234 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Pantry">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2e7d32">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon.svg">
 <link rel="icon" href="icon.svg">
-<title>Sowndarya's Pantry</title>
+<link rel="manifest" href="manifest.webmanifest">
+<title>Sow's Pantry — the health-first meal planner for Indian kitchens</title>
+<meta name="description" content="Sow's Pantry plans healthy, longevity-focused meals across 8 Indian & global cuisines, tracks your pantry, and builds a grocery list that flags what you already own. Free to start.">
+<meta property="og:title" content="Sow's Pantry — health-first meal planner for Indian kitchens">
+<meta property="og:description" content="Longevity-focused meal plans, a pantry-aware grocery list, and 88+ verified dishes across 8 cuisines. Free to start.">
+<meta property="og:type" content="website">
 <style>
-  :root{--g:#2e7d32;--g2:#e8f5e9;--bg:#fafafa;--card:#fff;--line:#e0e0e0;--warn:#e65100;--red:#c62828;--txt:#212121;--mut:#757575}
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);padding-bottom:80px}
-  header{background:var(--g);color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));position:sticky;top:0;z-index:10}
-  header h1{margin:0;font-size:20px;font-weight:600}
-  header .sub{font-size:12px;opacity:.85;margin-top:2px}
-  main{padding:12px;max-width:820px;margin:0 auto}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
-  .row{display:flex;align-items:center;gap:10px}
-  .row.sb{justify-content:space-between}
-  h2{font-size:16px;margin:0 0 10px}
-  .item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
-  .item:last-child{border-bottom:none}
-  .item .nm{flex:1;min-width:0}
-  .item .nm b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .item .nm small{color:var(--mut);font-size:12px}
-  .qty{font-variant-numeric:tabular-nums;font-weight:600;min-width:70px;text-align:right}
-  .low{color:var(--red)}
-  button{font-family:inherit;font-size:15px;border:none;border-radius:10px;padding:10px 14px;background:var(--g2);color:var(--g);font-weight:600;cursor:pointer;min-height:44px}
-  button.p{background:var(--g);color:#fff}
-  button.sm{padding:6px 10px;min-height:36px;font-size:14px}
-  button.g{background:#f0f0f0;color:var(--txt)}
-  button.danger{background:#ffebee;color:var(--red)}
-  input,select{font-family:inherit;font-size:16px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff;width:100%;min-height:44px}
-  .grid{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center}
-  .stepper{display:flex;align-items:center;gap:6px}
-  .stepper button{width:40px;padding:0;font-size:20px}
-  label{font-size:13px;color:var(--mut);display:block;margin-bottom:4px}
-  nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:10}
-  nav button{flex:1;background:none;border-radius:0;color:var(--mut);font-size:11px;font-weight:500;padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:56px}
-  nav button.on{color:var(--g)}
-  nav .ic{font-size:22px}
-  .tag{display:inline-block;background:var(--g2);color:var(--g);font-size:12px;padding:3px 8px;border-radius:20px;margin:2px 4px 2px 0}
-  .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .chips::-webkit-scrollbar{display:none}
-  .chip{flex:0 0 auto;background:#fff;border:1px solid var(--line);color:var(--txt);font-size:13px;font-weight:600;padding:7px 14px;border-radius:20px;min-height:auto;white-space:nowrap}
-  .chip.on{background:var(--g);color:#fff;border-color:var(--g)}
-  .thumb{width:52px;height:52px;border-radius:50%;background:var(--g2);display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden;flex:0 0 auto;cursor:pointer}
-  .thumb img{width:100%;height:100%;object-fit:cover}
-  .badge{background:var(--red);color:#fff;border-radius:20px;font-size:11px;padding:1px 6px;position:absolute;top:4px;right:calc(50% - 26px)}
-  .empty{text-align:center;color:var(--mut);padding:30px 10px}
-  .meal{border-left:4px solid var(--g);padding:8px 12px;margin-bottom:8px;background:var(--g2);border-radius:0 10px 10px 0}
-  .meal b{font-size:15px}
-  .meal small{color:#555;display:block}
-  .canmake{color:var(--g);font-weight:600;font-size:12px}
-  .cantmake{color:var(--warn);font-weight:600;font-size:12px}
-  dialog{border:none;border-radius:16px;padding:18px;width:92%;max-width:440px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
-  dialog::backdrop{background:rgba(0,0,0,.4)}
-  .fld{margin-bottom:12px}
-  .fab{position:fixed;right:16px;bottom:76px;bottom:calc(76px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;background:var(--g);color:#fff;font-size:28px;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:9;padding:0}
-  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#323232;color:#fff;padding:12px 18px;border-radius:24px;font-size:14px;z-index:20;opacity:0;transition:opacity .2s;max-width:90%;text-align:center}
-  .toast.show{opacity:1}
-  .ingline{display:grid;grid-template-columns:1fr 70px 70px 30px;gap:6px;margin-bottom:6px;align-items:center}
-  .ingline input,.ingline select{padding:8px;font-size:14px;min-height:38px}
-  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:16px;border-radius:10px;background:var(--g2);outline:none;padding:0;margin:10px 0}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:42px;height:42px;border-radius:50%;background:var(--g);box-shadow:0 2px 8px rgba(0,0,0,.35);cursor:pointer}
-  input[type=range]::-moz-range-thumb{width:42px;height:42px;border:none;border-radius:50%;background:var(--g);box-shadow:0 2px 8px rgba(0,0,0,.35)}
-  .qsval{text-align:center;font-size:44px;font-weight:700;color:var(--g);line-height:1}
-  .qsu{font-size:18px;color:var(--mut);font-weight:500}
-  .qty{cursor:pointer}
+  :root{--g:#2e7d32;--g2:#e8f5e9;--gd:#1b5e20;--bg:#fff;--ink:#1a1a1a;--mut:#5f6b62;--line:#e3e8e3;--amber:#f9a825}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);line-height:1.55;background:var(--bg)}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  .btn{display:inline-block;background:var(--g);color:#fff;font-weight:700;padding:13px 24px;border-radius:12px;border:none;cursor:pointer;font-size:16px;transition:transform .06s}
+  .btn:active{transform:scale(.97)}
+  .btn.ghost{background:#fff;color:var(--g);border:1.5px solid var(--g2)}
+  .btn.big{padding:16px 32px;font-size:18px}
+  /* nav */
+  header{position:sticky;top:0;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:20}
+  nav{display:flex;align-items:center;gap:8px;height:64px}
+  .brand{font-weight:800;font-size:19px;color:var(--gd);margin-right:auto;display:flex;align-items:center;gap:8px}
+  nav .links{display:flex;gap:22px;align-items:center;margin-right:20px}
+  nav .links a{color:var(--mut);font-weight:600;font-size:15px}
+  nav .links a:hover{color:var(--g)}
+  @media(max-width:760px){nav .links{display:none}}
+  /* hero */
+  .hero{background:linear-gradient(160deg,#f4fbf5,#e8f5e9);padding:64px 0 72px;text-align:center}
+  .kicker{display:inline-block;background:#fff;color:var(--g);font-weight:700;font-size:13px;padding:6px 14px;border-radius:20px;border:1px solid var(--g2);margin-bottom:20px}
+  h1{font-size:clamp(32px,5.5vw,52px);line-height:1.1;letter-spacing:-.02em;font-weight:800;max-width:14ch;margin:0 auto 18px}
+  h1 .em{color:var(--g)}
+  .sub{font-size:clamp(17px,2.4vw,21px);color:var(--mut);max-width:56ch;margin:0 auto 30px}
+  .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .note{color:var(--mut);font-size:13px;margin-top:14px}
+  .hero-shot{margin:44px auto 0;max-width:340px;background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 20px 50px rgba(27,94,32,.12);padding:16px;text-align:left}
+  .meter{margin:8px 0}
+  .meter .lab{display:flex;justify-content:space-between;font-size:12px;color:var(--mut)}
+  .bar{height:9px;background:#eee;border-radius:6px;overflow:hidden;margin-top:3px}
+  .bar > i{display:block;height:100%;border-radius:6px}
+  .mealrow{display:flex;gap:10px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:12px;margin-top:8px}
+  .mealrow .em{width:40px;height:40px;border-radius:50%;background:var(--g2);display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto}
+  .mealrow b{font-size:14px;display:block}
+  .mealrow small{color:var(--mut);font-size:12px}
+  /* sections */
+  section{padding:64px 0}
+  .eyebrow{color:var(--g);font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;text-align:center}
+  h2{font-size:clamp(26px,4vw,36px);font-weight:800;letter-spacing:-.02em;text-align:center;margin:10px auto 12px;max-width:20ch}
+  .lead{color:var(--mut);text-align:center;max-width:60ch;margin:0 auto 40px;font-size:17px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);border-radius:16px;padding:24px;background:#fff}
+  .card .ic{font-size:28px}
+  .card h3{font-size:18px;margin:12px 0 6px}
+  .card p{color:var(--mut);font-size:15px}
+  .alt{background:#f7faf7}
+  .cuisines{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:760px;margin:0 auto}
+  .cz{background:#fff;border:1px solid var(--line);border-radius:20px;padding:9px 18px;font-weight:600;color:var(--gd)}
+  /* steps */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;counter-reset:s}
+  @media(max-width:820px){.steps{grid-template-columns:1fr 1fr}}
+  .step{padding:20px;border-radius:14px;background:#fff;border:1px solid var(--line)}
+  .step .n{width:34px;height:34px;border-radius:50%;background:var(--g);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+  .step h3{font-size:16px;margin-bottom:4px}.step p{color:var(--mut);font-size:14px}
+  /* pricing */
+  .plans{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:760px;margin:0 auto}
+  @media(max-width:680px){.plans{grid-template-columns:1fr}}
+  .plan{border:1px solid var(--line);border-radius:18px;padding:28px;background:#fff;position:relative}
+  .plan.pro{border:2px solid var(--g);box-shadow:0 16px 40px rgba(27,94,32,.12)}
+  .plan .tag{position:absolute;top:-12px;right:20px;background:var(--g);color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px}
+  .plan h3{font-size:20px}
+  .price{font-size:40px;font-weight:800;margin:10px 0 2px}.price small{font-size:15px;color:var(--mut);font-weight:600}
+  .plan ul{list-style:none;margin:18px 0 22px}
+  .plan li{padding:7px 0;padding-left:26px;position:relative;color:#333;font-size:15px}
+  .plan li:before{content:"✓";position:absolute;left:0;color:var(--g);font-weight:800}
+  .plan li.no{color:var(--mut)}.plan li.no:before{content:"—";color:var(--mut)}
+  /* faq */
+  details{border-bottom:1px solid var(--line);padding:18px 0}
+  details summary{font-weight:700;cursor:pointer;font-size:17px;list-style:none;display:flex;justify-content:space-between}
+  details summary::-webkit-details-marker{display:none}
+  details summary:after{content:"+";color:var(--g);font-weight:800}
+  details[open] summary:after{content:"−"}
+  details p{color:var(--mut);margin-top:10px}
+  /* cta band + footer */
+  .band{background:var(--gd);color:#fff;text-align:center;border-radius:24px;padding:48px 24px;margin:20px auto}
+  .band h2{color:#fff}.band .lead{color:#cfe8d2}
+  footer{border-top:1px solid var(--line);padding:36px 0;color:var(--mut);font-size:14px}
+  footer .cols{display:flex;justify-content:space-between;flex-wrap:wrap;gap:20px}
+  footer a{color:var(--mut)}footer a:hover{color:var(--g)}
+  .disc{font-size:12px;color:var(--mut);text-align:center;margin-top:24px;max-width:70ch;margin-inline:auto}
 </style>
 </head>
 <body>
-<header>
-  <div class="row sb">
-    <div><h1 id="title">🥗 Sowndarya's Pantry</h1>
-    <div class="sub" id="sub">Loading…</div></div>
-    <button class="sm g" style="background:rgba(255,255,255,.2);color:#fff" onclick="settings()"><span id="syncDot">⚙︎</span></button>
+<header><div class="wrap"><nav>
+  <a class="brand" href="/">🥗 Sow's Pantry</a>
+  <div class="links">
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#recipes">Recipes</a>
+    <a href="#faq">FAQ</a>
+    <a href="/app.html">Log in</a>
   </div>
-</header>
-<main id="view"></main>
+  <a class="btn" href="/app.html">Get started</a>
+</nav></div></header>
 
-<button class="fab" id="fab" onclick="fabAction()">+</button>
+<div class="hero"><div class="wrap">
+  <span class="kicker">🌿 Health-first · built for Indian kitchens</span>
+  <h1>Eat for a <span class="em">long, healthy life</span> — without giving up your food</h1>
+  <p class="sub">Sow's Pantry plans protein- and fiber-forward meals across 8 Indian & global cuisines, tracks your pantry, and builds a grocery list that flags what you already own — so shop day is faster and your family eats off the carb-heavy autopilot.</p>
+  <div class="cta-row">
+    <a class="btn big" href="/app.html">Start free →</a>
+    <a class="btn big ghost" href="#pricing">See pricing</a>
+  </div>
+  <p class="note">No credit card to start · works on iPad, iPhone & Android · installs like an app</p>
 
-<nav>
-  <button data-tab="meals" class="on" onclick="go('meals')"><span class="ic">🥗</span>Today</button>
-  <button data-tab="cook" onclick="go('cook')"><span class="ic">🍳</span>Cook</button>
-  <button data-tab="pantry" onclick="go('pantry')"><span class="ic">🥫</span>Pantry</button>
-  <button data-tab="shop" onclick="go('shop')" style="position:relative"><span class="ic">🛒</span>Order<span class="badge" id="shopBadge" style="display:none">0</span></button>
-</nav>
+  <div class="hero-shot">
+    <div style="font-size:12px;color:var(--mut);font-weight:700">TODAY · PER ADULT</div>
+    <div class="meter"><div class="lab"><span>💪 Protein</span><b>72 / 90 g</b></div><div class="bar"><i style="width:80%;background:var(--amber)"></i></div></div>
+    <div class="meter"><div class="lab"><span>🌾 Fiber</span><b>43 / 28 g</b></div><div class="bar"><i style="width:100%;background:var(--g)"></i></div></div>
+    <div class="mealrow"><div class="em">🥞</div><div><b>🟢 Ragi Adai with Mixed Dal</b><small>↪ swap for white-rice idli · 15g protein</small></div></div>
+    <div class="mealrow"><div class="em">🥘</div><div><b>🟢 Rajma Masala + Bajra Roti</b><small>North Indian · low-GI · 21g protein</small></div></div>
+  </div>
+</div></div>
 
-<div class="toast" id="toast"></div>
+<section id="features"><div class="wrap">
+  <div class="eyebrow">Why it's different</div>
+  <h2>Most planners give you recipes. This one gives you healthier ones you'll actually cook.</h2>
+  <p class="lead">Every suggestion is a protein-forward, lower-glycemic swap for a carb-heavy default — grounded in nutrition research, tuned to Indian kitchens.</p>
+  <div class="grid">
+    <div class="card"><div class="ic">🍚→🌾</div><h3>Rice → millet swaps</h3><p>Each dish is an explicit healthier swap (foxtail millet for white rice, bajra roti for naan) with the glucose-spike difference shown.</p></div>
+    <div class="card"><div class="ic">📊</div><h3>Real nutrition, not vibes</h3><p>Per-meal calories, protein, carbs & fiber roll into a daily meter against evidence-based targets. Hit your protein and fiber, every day.</p></div>
+    <div class="card"><div class="ic">🥫</div><h3>Pantry-aware grocery list</h3><p>Tell it what's in your kitchen. When a plan hits the shopping list, it flags what you already own — so you don't buy onions twice.</p></div>
+    <div class="card"><div class="ic">🍳</div><h3>Cook-what-you-have</h3><p>Say "I made this for 4" and it deducts the right quantities from your pantry, then re-flags low staples to reorder.</p></div>
+    <div class="card"><div class="ic">🌏</div><h3>8 cuisines, one kitchen</h3><p>South & North Indian, Gujarati, Bengali, Maharashtrian, Rajasthani, Indo-Chinese & healthy global — filter by what you feel like.</p></div>
+    <div class="card"><div class="ic">📲</div><h3>Family-friendly by design</h3><p>Sync across every device, push the grocery order to a partner on Telegram, add your own recipes with photos. Works offline.</p></div>
+  </div>
+</div></section>
 
-<script src="data.js"></script>
-<script>
-"use strict";
-// ---------- storage ----------
-const KEY = "pantry.v2";   // bumped: verified longevity meal DB
-const UNITS = ["g","kg","ml","L","pcs","cup","tbsp","tsp","pack"];
-// per-adult daily targets — from verified research (adjust for kids/activity; see disclaimer)
-const TARGET = (window.HEALTH && HEALTH.targets) || {protein_g:90, fiber_g:28, kcal:2000};
-let S = load();
+<section class="alt" id="recipes"><div class="wrap">
+  <div class="eyebrow">The library</div>
+  <h2>88+ verified dishes across every cuisine your kitchen makes</h2>
+  <p class="lead">Fact-checked for nutrition and authenticity, each labelled veg / non-veg, low-GI, high-protein and more.</p>
+  <div class="cuisines">
+    <span class="cz">🌴 South Indian</span><span class="cz">🫓 North Indian</span><span class="cz">🥘 Gujarati</span>
+    <span class="cz">🐟 Bengali</span><span class="cz">🌶️ Maharashtrian</span><span class="cz">🏜️ Rajasthani</span>
+    <span class="cz">🥢 Indo-Chinese</span><span class="cz">🥗 Continental</span>
+  </div>
+  <p class="lead" style="margin-top:34px">…plus your own recipes — with per-person ingredients so cook-and-deduct just works.</p>
+  <div style="text-align:center"><a class="btn" href="/app.html">Browse the plan →</a></div>
+</div></section>
 
-function load(){
-  try{ const d = JSON.parse(localStorage.getItem(KEY)); if(d) return d; }catch(e){}
-  return seed();
-}
-function save(){ localStorage.setItem(KEY, JSON.stringify(S)); refreshBadge(); }
+<section><div class="wrap">
+  <div class="eyebrow">How it works</div>
+  <h2>From "what's for dinner" to a done grocery order in minutes</h2>
+  <div class="steps" style="margin-top:36px">
+    <div class="step"><div class="n">1</div><h3>Open the plan</h3><p>Get a healthy breakfast, lunch, dinner & snack for today, with macros.</p></div>
+    <div class="step"><div class="n">2</div><h3>Swap freely</h3><p>Don't like one? Swap it, filter by cuisine, or add your own recipe.</p></div>
+    <div class="step"><div class="n">3</div><h3>Shop smart</h3><p>Low staples auto-appear on a pantry-aware list. Push it to your partner.</p></div>
+    <div class="step"><div class="n">4</div><h3>Cook & track</h3><p>Log what you cooked; the pantry updates itself for next week.</p></div>
+  </div>
+</div></section>
 
-// ---------- seed: verified longevity meal DB + derived pantry (qty are PER PERSON) ----------
-function seed(){
-  const pantry = (window.PANTRY_SEED||[]).map(p=>({id:id(), ...p}));
-  const dishes = (window.HEALTHY_DISHES||[]).map(d=>({id:id(), ...d}));
-  return { pantry, dishes, shop:[], log:[] };
-}
-function id(){ return Math.random().toString(36).slice(2,9); }
-
-// ---------- helpers ----------
-function findPantry(name){ return S.pantry.find(p=>p.name.toLowerCase()===name.toLowerCase()); }
-function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
-function refreshBadge(){ const n=S.shop.filter(s=>!s.checked).length; const b=document.getElementById('shopBadge'); b.style.display=n?'inline-block':'none'; b.textContent=n; }
-function fmt(q){ return Math.round(q*10)/10; }
-
-// add/merge an item into shopping list
-function addToShop(name, unit, need){
-  const ex = S.shop.find(s=>s.name.toLowerCase()===name.toLowerCase() && !s.checked);
-  if(ex){ ex.need = Math.max(ex.need, Math.ceil(need)); }
-  else S.shop.push({id:id(), name, unit, need:Math.ceil(need), checked:false});
-}
-// after any pantry change, auto-flag low items to the order list
-function autoRestock(){
-  S.pantry.forEach(p=>{
-    if(p.qty <= p.low){
-      const target = p.low*3; // restock to ~3x threshold
-      addToShop(p.name, p.unit, target - p.qty);
-    }
-  });
-}
-
-// ---------- routing ----------
-let TAB = "pantry";
-function go(tab){ TAB=tab; document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===tab)); render(); }
-function render(){ ({pantry:renderPantry, cook:renderCook, meals:renderMeals, shop:renderShop}[TAB])(); refreshBadge(); }
-
-// ---------- PANTRY ----------
-function renderPantry(){
-  document.getElementById('sub').textContent = S.pantry.length + " items tracked";
-  const list = [...S.pantry].sort((a,b)=> (a.qty<=a.low?-1:0)-(b.qty<=b.low?-1:0) || a.name.localeCompare(b.name));
-  let h = `<div class="card"><h2>Pantry stock</h2>`;
-  if(!list.length) h+=`<div class="empty">Empty. Tap + to add items.</div>`;
-  list.forEach(p=>{
-    const low = p.qty<=p.low;
-    h+=`<div class="item">
-      <div class="nm"><b>${esc(p.name)}</b><small>${low?'⚠️ low · ':''}min ${p.low}${p.unit}</small></div>
-      <div class="stepper">
-        <button class="sm g" onclick="bump('${p.id}',-1)">−</button>
-        <div class="qty ${low?'low':''}" onclick="quickSet('${p.id}')">${fmt(p.qty)}<small style="color:var(--mut)">${p.unit}</small></div>
-        <button class="sm g" onclick="bump('${p.id}',1)">+</button>
-      </div>
-      <button class="sm g" onclick="editItem('${p.id}')">✎</button>
-    </div>`;
-  });
-  h+=`</div>`;
-  document.getElementById('view').innerHTML = h;
-}
-function bump(pid, dir){
-  const p = S.pantry.find(x=>x.id===pid); if(!p) return;
-  const step = p.unit==='g'||p.unit==='ml' ? 50 : 1;
-  p.qty = Math.max(0, fmt(p.qty + dir*step));
-  autoRestock(); save(); renderPantry();
-}
-// quick slider set — dynamic range per item, no typing
-function quickSet(pid){
-  const p = S.pantry.find(x=>x.id===pid); if(!p) return;
-  const step = (p.unit==='g'||p.unit==='ml') ? 25 : 1;
-  const cap  = Math.max(step*10, Math.ceil(Math.max(p.qty, p.low*3)*1.5/step)*step); // room above current/low
-  window._qs = p.qty;
-  dlg(`<h2 style="text-align:center">${esc(p.name)}</h2>
-    <div class="qsval" id="qsVal">${fmt(p.qty)}<span class="qsu">${p.unit}</span></div>
-    <input type="range" min="0" max="${cap}" step="${step}" value="${p.qty}" oninput="qsSlide(this,'${p.unit}')">
-    <div class="row sb" style="font-size:12px;color:var(--mut);margin-top:-4px"><span>0</span><span>${cap}${p.unit}</span></div>
-    <div class="row" style="gap:8px;margin-top:16px">
-      <button class="g" onclick="qsSlide2(-${step},'${p.unit}',${cap})">−${step}</button>
-      <button class="g" onclick="qsSlide2(${step},'${p.unit}',${cap})">+${step}</button>
-      <button class="p" style="flex:1" onclick="quickSave('${p.id}')">Save</button></div>`);
-}
-function qsSlide(el,unit){ window._qs=+el.value; document.getElementById('qsVal').innerHTML=el.value+'<span class="qsu">'+unit+'</span>'; }
-function qsSlide2(d,unit,cap){ // nudge buttons for precision, keep slider in sync
-  window._qs=Math.min(cap,Math.max(0,fmt(window._qs+d)));
-  document.querySelector('#dlg input[type=range]').value=window._qs;
-  document.getElementById('qsVal').innerHTML=window._qs+'<span class="qsu">'+unit+'</span>';
-}
-function quickSave(pid){ const p=S.pantry.find(x=>x.id===pid); if(!p)return; p.qty=fmt(window._qs); autoRestock(); save(); closeDlg(); renderPantry(); }
-
-// ---------- COOK (the core: deduct on cook) ----------
-function renderCook(){
-  document.getElementById('sub').textContent = "Log what you cooked → stock updates";
-  let h = `<div class="card"><div class="row sb"><h2>I cooked…</h2>
-      <button class="sm p" onclick="addDish()">＋ New recipe</button></div>
-    <div class="fld"><label>Dish</label>
-      <select id="ckDish">${S.dishes.map(d=>`<option value="${d.id}">${esc(d.name)} · ${d.meal}</option>`).join('')}</select></div>
-    <div class="fld"><label>For how many people?</label>
-      <div class="stepper"><button class="g" onclick="ppl(-1)">−</button>
-      <input id="ckPpl" type="number" value="4" min="1" style="text-align:center;max-width:90px" oninput="previewCook()">
-      <button class="g" onclick="ppl(1)">+</button></div></div>
-    <div id="ckPreview"></div>
-    <button class="p" style="width:100%" onclick="doCook()">Cook & reduce pantry</button>
-  </div>`;
-  // recent log
-  if(S.log.length){
-    h+=`<div class="card"><h2>Recent</h2>`;
-    S.log.slice(-8).reverse().forEach(l=>{ h+=`<div class="item"><div class="nm"><b>${esc(l.dish)}</b><small>${l.ts}</small></div><div class="qty">${l.people}👤</div></div>`; });
-    h+=`</div>`;
-  }
-  document.getElementById('view').innerHTML = h;
-  document.getElementById('ckDish').onchange = previewCook;
-  previewCook();
-}
-function ppl(d){ const el=document.getElementById('ckPpl'); el.value=Math.max(1,(+el.value||1)+d); previewCook(); }
-function currentCook(){
-  const d = S.dishes.find(x=>x.id===document.getElementById('ckDish').value);
-  const n = Math.max(1, +document.getElementById('ckPpl').value||1);
-  return {d,n};
-}
-function previewCook(){
-  const {d,n} = currentCook(); if(!d) return;
-  let ok=true, rows='';
-  d.ing.forEach(i=>{
-    const need = i.qty*n, p = findPantry(i.name);
-    const have = p? p.qty : 0, short = have < need;
-    if(short) ok=false;
-    rows+=`<div class="item"><div class="nm"><b>${esc(i.name)}</b><small>have ${fmt(have)}${p?p.unit:i.unit}</small></div>
-      <div class="qty ${short?'low':''}">−${fmt(need)}${i.unit}${short?' ⚠️':''}</div></div>`;
-  });
-  document.getElementById('ckPreview').innerHTML =
-    `<div class="card" style="margin:0 0 12px;background:var(--g2);border:none">
-      <div class="row sb"><b>Will deduct (${n} ppl)</b><span class="${ok?'canmake':'cantmake'}">${ok?'✓ enough stock':'⚠️ short — will add to Order'}</span></div>${rows}</div>`;
-}
-function doCook(){
-  const {d,n} = currentCook(); if(!d) return;
-  d.ing.forEach(i=>{
-    let p = findPantry(i.name);
-    const need = i.qty*n;
-    if(!p){ p = {id:id(), name:i.name, qty:0, unit:i.unit, low:Math.ceil(i.qty)}; S.pantry.push(p); }
-    p.qty = Math.max(0, fmt(p.qty - need));
-  });
-  S.log.push({ts:new Date().toLocaleString(), dish:d.name, people:n});
-  autoRestock(); save();
-  toast(`✅ Made ${d.name} for ${n}. Pantry updated.`);
-  go('pantry');
-}
-
-// ---------- MEALS: health-first suggester (the hero screen) ----------
-const MEALS = [["breakfast","🌅","Breakfast"],["lunch","☀️","Lunch"],["dinner","🌙","Dinner"],["snack","🍵","Snack"]];
-let mealOff = {breakfast:0,lunch:0,dinner:0,snack:0};   // "swap" offset for alternatives
-let cuisineFilter = "All";
-function cuisineList(){ return ["All", ...[...new Set(S.dishes.map(d=>d.cuisine).filter(Boolean))].sort()]; }
-function dishesFor(m){ return S.dishes.filter(d=>d.healthy && d.meal===m && (cuisineFilter==="All" || d.cuisine===cuisineFilter)); }
-function setCuisine(c){ cuisineFilter=c; renderMeals(); }
-function pickDish(m){ const a=dishesFor(m); if(!a.length) return null;
-  return a[((new Date().getDate())+mealOff[m])%a.length]; }
-// derive health highlights from ingredients — dynamic, no manual data
-function healthTags(d){
-  const n=d.ing.map(i=>i.name.toLowerCase()).join(' '); const t=[];
-  if(/dal|paneer|curd|yogurt|urad|moong|toor|egg|milk|sprout/.test(n)) t.push("💪 protein");
-  if(/spinach|palak|methi|carrot|tomato|onion|greens|vegetable|beans|capsicum/.test(n)) t.push("🌿 veggies");
-  if(/oats|atta|ragi|millet|wheat|brown rice|idli rava/.test(n)) t.push("🌾 whole-grain");
-  if(/curd|yogurt/.test(n)) t.push("🥛 gut-friendly");
-  if(!/oil|ghee/.test(n)||/steam|idli/.test(n)) t.push("🪶 light");
-  return t.slice(0,3);
-}
-// nutrition meter bar
-function bar(label, val, target, unit, good){
-  const pct = Math.min(100, Math.round(val/target*100));
-  const col = good ? (pct>=100?'#2e7d32':pct>=60?'#f9a825':'#e65100')  // more is better (protein/fiber)
-                   : (pct<=100?'#2e7d32':'#e65100');                    // less is better (kcal ceiling)
-  return `<div style="margin:8px 0">
-    <div class="row sb" style="font-size:12px"><span>${label}</span><b>${Math.round(val)}/${target}${unit}</b></div>
-    <div style="height:10px;background:#eee;border-radius:6px;overflow:hidden;margin-top:3px">
-      <div style="height:100%;width:${pct}%;background:${col};border-radius:6px"></div></div></div>`;
-}
-function renderMeals(){
-  document.getElementById('sub').textContent = "Sowndarya's healthy plan for today";
-  // pick the 3 meals first, then score the day's nutrition
-  const picks = MEALS.map(([m,icon,label])=>({m,icon,label,d:pickDish(m)}));
-  const tot = picks.reduce((a,{d})=>{ if(d){a.p+=(+d.protein_g||0);a.f+=(+d.fiber_g||0);a.k+=(+d.kcal||0);} return a; },{p:0,f:0,k:0});
-
-  let h = `<div class="card" style="background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;border:none">
-    <div class="row sb"><div><h2 style="margin:0;color:#fff">🌿 Eat well today</h2>
-      <small style="opacity:.9">Protein-forward, high-fiber, lower-carb — for a long, productive life</small></div>
-      <button class="sm" style="background:rgba(255,255,255,.25);color:#fff" onclick="shuffleAll()">🔄 New ideas</button></div></div>`;
-
-  // cuisine filter chips
-  const cl = cuisineList();
-  if(cl.length>2){ h+=`<div class="chips">${cl.map(c=>`<button class="chip ${c===cuisineFilter?'on':''}" onclick="setCuisine('${c.replace(/'/g,"\\'")}')">${c==='All'?'🍽️ All':esc(c)}</button>`).join('')}</div>`; }
-
-  // daily nutrition meter (per adult, from today's 3 suggestions)
-  h+=`<div class="card"><div class="row sb"><h2 style="margin:0">Today's nutrition <small style="color:var(--mut);font-weight:400">/ adult</small></h2>
-      <small style="color:var(--mut)">from the 3 meals below</small></div>
-    ${bar('💪 Protein', tot.p, TARGET.protein_g, 'g', true)}
-    ${bar('🌾 Fiber',   tot.f, TARGET.fiber_g, 'g', true)}
-    ${bar('🔥 Calories',tot.k, TARGET.kcal, '', false)}
-    <small style="color:var(--mut)">${tot.p>=TARGET.protein_g&&tot.f>=TARGET.fiber_g?'✅ Great balance today':'Add a protein snack or ↺ swap a meal to hit protein + fiber goals'}</small></div>`;
-
-  // rotating health coaching tip (verified, highest-leverage)
-  const tips = window.COACH_TIPS||[];
-  if(tips.length){ const tip = tips[(new Date().getDate()+ (mealOff.breakfast))%tips.length];
-    h+=`<div class="card" style="background:#fff8e1;border-color:#ffe082"><div style="font-size:14px">${esc(tip)}</div></div>`; }
-
-  picks.forEach(({m,icon,label,d})=>{
-    if(!d){ h+=`<div class="card"><div class="row sb"><b>${icon} ${label}</b>
-      <button class="sm p" onclick="addDish()">＋ Add recipe</button></div>
-      <div class="empty" style="padding:14px">No healthy ${label.toLowerCase()} yet.</div></div>`; return; }
-    const {ok,missing} = canMake(d,4);
-    const tags = healthTags(d).map(t=>`<span class="tag">${t}</span>`).join('');
-    const macro = (+d.kcal||+d.protein_g) ? `<div class="row" style="gap:14px;font-size:13px;color:var(--mut);margin:6px 0">
-        <span>🔥 ${Math.round(+d.kcal||0)} kcal</span><span>💪 ${fmt(+d.protein_g||0)}g protein</span>
-        <span>🌾 ${fmt(+d.fiber_g||0)}g fiber</span></div>` : '';
-    const swap = d.swapsFor ? `<div style="font-size:12px;color:var(--g);margin-bottom:4px">↪ healthier swap for <b>${esc(d.swapsFor)}</b></div>` : '';
-    h+=`<div class="card">
-      <div class="row sb"><small style="color:var(--mut);font-weight:600;letter-spacing:.5px">${icon} ${label.toUpperCase()}${d.cuisine?' · '+esc(d.cuisine):''}</small>
-        <button class="sm g" onclick="swapMeal('${m}')">↺ swap</button></div>
-      <div class="row" style="gap:10px;align-items:center;margin:4px 0">
-        <div class="thumb" onclick="photoForDish('${d.id}')" title="Tap to add a photo">${d.image?`<img src="${esc(d.image)}">`:dishEmoji(d)}</div>
-        <div style="font-size:19px;font-weight:700;flex:1"><span title="${d.veg===false?'non-veg':'veg'}" style="font-size:13px">${d.veg===false?'🔴':'🟢'}</span> ${esc(d.name)}</div></div>
-      ${swap}
-      <div style="margin-bottom:2px">${tags}</div>
-      ${macro}
-      ${d.rationale?`<small style="color:#444">💡 ${esc(d.rationale)}</small>`:''}
-      <div style="font-size:12px;color:var(--mut);margin-top:6px">${d.ing.map(i=>esc(i.name)).join(' · ')}</div>
-      <div class="row sb" style="margin-top:10px">
-        <span class="${ok?'canmake':'cantmake'}">${ok?'✓ you have everything (4)':'🛒 need: '+missing.join(', ')}</span>
-        <button class="sm p" onclick="cookThis('${d.id}')">I'll make this →</button></div>
-    </div>`;
-  });
-
-  h+=`<div class="card"><div class="row sb"><h2>This week</h2>
-      <button class="sm p" onclick="addDish()">＋ New recipe</button></div>`;
-  ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].forEach((day,i)=>{
-    const g=m=>{const a=dishesFor(m); return a.length?a[i%a.length].name:'—';};
-    h+=`<div class="meal"><b>${day}</b>
-      <small>🌅 ${esc(g("breakfast"))} &nbsp; ☀️ ${esc(g("lunch"))} &nbsp; 🌙 ${esc(g("dinner"))}</small></div>`;
-  });
-  h+=`</div>`;
-  h+=`<div style="text-align:center;color:var(--mut);font-size:11px;padding:4px 12px 8px">
-    General healthy-eating guidance, not medical advice. Diabetic, pregnant, or on medication? Confirm targets with a clinician.</div>`;
-  document.getElementById('view').innerHTML = h;
-}
-function swapMeal(m){ mealOff[m]++; renderMeals(); }
-function shuffleAll(){ MEALS.forEach(([m])=>mealOff[m]++); renderMeals(); toast("Fresh suggestions 🌿"); }
-function canMake(d,n){
-  const missing=[];
-  d.ing.forEach(i=>{ const p=findPantry(i.name); if(!p || p.qty < i.qty*n) missing.push(i.name); });
-  return {ok:missing.length===0, missing};
-}
-function cookThis(did){ go('cook'); setTimeout(()=>{ document.getElementById('ckDish').value=did; previewCook(); },30); }
-// visual placeholder when a dish has no photo yet
-function dishEmoji(d){
-  const s=(d.name+' '+(d.tags||[]).join(' ')).toLowerCase();
-  const map=[['dosa|adai|chilla|pesarattu|cheela|thalipeeth','🥞'],['idli|dhokla|khaman','🍥'],['egg|bhurji|omelette','🥚'],
-   ['chicken|tandoori','🍗'],['fish','🐟'],['paneer|tofu','🧀'],['salad|kachumber|koshimbir|chaat|raita|kosambari','🥗'],
-   ['soup|rasam|saaru|shukto','🍲'],['curd|yogurt|buttermilk|lassi','🥛'],['roti|bhakri|thepla|paratha|mudde','🫓'],
-   ['millet|ragi|bajra|jowar|foxtail|khichdi|pongal|upma|oats|quinoa|bath','🌾'],
-   ['dal|sambar|kootu|usal|misal|ghugni|rajma|chana|sundal|gram|kollu|rasam','🥘'],['malt|smoothie','🥤']];
-  for(const [re,em] of map) if(new RegExp(re).test(s)) return em;
-  return '🍽️';
-}
-// snap/attach a photo to any dish (uploads to Cloudinary, syncs)
-function photoForDish(did){
-  const d=S.dishes.find(x=>x.id===did); if(!d) return;
-  if(!CFG.cloudName||!CFG.uploadPreset) return toast("Add Cloudinary in ⚙︎ to enable photos");
-  const i=document.createElement('input'); i.type='file'; i.accept='image/*'; i.capture='environment';
-  i.onchange=async e=>{ const f=e.target.files[0]; if(!f) return; toast("Uploading photo…");
-    const url=await uploadImage(f); if(url){ d.image=url; save(); renderMeals(); toast("📷 Photo added"); } };
-  i.click();
-}
-async function pickDishImage(inp){ const f=inp.files&&inp.files[0]; if(!f) return;
-  toast("Uploading photo…"); const url=await uploadImage(f);
-  if(url){ window._img=url; const t=document.getElementById('dishThumb'); if(t) t.innerHTML=`<img src="${esc(url)}">`; toast("Photo added"); }
-}
-
-// ---------- SHOP / ORDER ----------
-function renderShop(){
-  const active = S.shop.filter(s=>!s.checked), done = S.shop.filter(s=>s.checked);
-  document.getElementById('sub').textContent = active.length+" items to order";
-  let h = `<div class="card"><div class="row sb"><h2>🛒 Grocery order</h2>
-    <div class="row" style="gap:6px"><button class="sm p" onclick="sendTelegram()">📲 Telegram</button>
-    <button class="sm g" onclick="shareOrder()">Share</button></div></div>`;
-  if(!active.length) h+=`<div class="empty">All stocked up 🎉<br><small>Low items appear here automatically.</small></div>`;
-  active.forEach(s=>{
-    h+=`<div class="item"><div class="nm"><b>${esc(s.name)}</b><small>~${s.need}${s.unit} needed</small></div>
-      <button class="sm" onclick="checkShop('${s.id}')">✓ Got it</button></div>`;
-  });
-  h+=`</div>`;
-  if(done.length){
-    h+=`<div class="card"><h2>Bought</h2>`;
-    done.forEach(s=>{ h+=`<div class="item"><div class="nm"><b style="text-decoration:line-through;color:var(--mut)">${esc(s.name)}</b></div>
-      <button class="sm g" onclick="restockFromShop('${s.id}')">+ to pantry</button></div>`; });
-    h+=`<button class="g" style="width:100%;margin-top:8px" onclick="clearBought()">Clear bought</button></div>`;
-  }
-  document.getElementById('view').innerHTML = h;
-}
-function checkShop(sid){ const s=S.shop.find(x=>x.id===sid); if(s)s.checked=true; save(); renderShop(); }
-function restockFromShop(sid){
-  const s=S.shop.find(x=>x.id===sid); if(!s) return;
-  let p=findPantry(s.name);
-  if(!p){ p={id:id(),name:s.name,qty:0,unit:s.unit,low:Math.ceil(s.need/3)}; S.pantry.push(p); }
-  p.qty=fmt(p.qty+s.need);
-  S.shop=S.shop.filter(x=>x.id!==sid); save(); toast(`Added ${s.need}${s.unit} ${s.name} to pantry`); renderShop();
-}
-function clearBought(){ S.shop=S.shop.filter(s=>!s.checked); save(); renderShop(); }
-function shareOrder(){
-  const lines = S.shop.filter(s=>!s.checked).map(s=>`• ${s.name} — ${s.need}${s.unit}`).join('\n');
-  const txt = "🛒 Grocery order (Sowndarya's Pantry)\n"+(lines||"(nothing needed)");
-  if(navigator.share){ navigator.share({title:"Grocery order", text:txt}).catch(()=>{}); }
-  else { navigator.clipboard?.writeText(txt); toast("Order copied — paste to Pavan"); }
-}
-
-// ---------- FAB / dialogs ----------
-function fabAction(){ if(TAB==='cook'||TAB==='meals') addDish(); else if(TAB==='shop') addShopItem(); else editItem(null); }
-
-function editItem(pid){
-  const p = pid? S.pantry.find(x=>x.id===pid) : null;
-  dlg(`<h2>${p?'Edit item':'Add pantry item'}</h2>
-    <div class="fld"><label>Name</label><input id="dName" value="${p?esc(p.name):''}" placeholder="e.g. Basmati Rice"></div>
-    <div class="grid">
-      <div><label>Quantity (weight/count)</label><input id="dQty" type="number" value="${p?p.qty:0}"></div>
-      <div><label>Unit</label><select id="dUnit">${UNITS.map(u=>`<option ${p&&p.unit===u?'selected':''}>${u}</option>`).join('')}</select></div>
-      <div><label>Alert below</label><input id="dLow" type="number" value="${p?p.low:100}" style="width:80px"></div>
+<section class="alt" id="pricing"><div class="wrap">
+  <div class="eyebrow">Pricing</div>
+  <h2>Start free. Upgrade when your whole family's on it.</h2>
+  <p class="lead">Simple pricing, cancel anytime. Prices in USD.</p>
+  <div class="plans">
+    <div class="plan">
+      <h3>Home</h3>
+      <div class="price">$0<small> / forever</small></div>
+      <p style="color:var(--mut);font-size:14px">Everything one cook needs to eat healthier.</p>
+      <ul>
+        <li>Daily healthy meal suggestions</li>
+        <li>Full 88-dish, 8-cuisine library</li>
+        <li>Pantry tracking + cook-and-deduct</li>
+        <li>Pantry-aware grocery list</li>
+        <li>On one device</li>
+        <li class="no">Multi-device sync</li>
+        <li class="no">Telegram order push & dish photos</li>
+      </ul>
+      <a class="btn ghost" style="width:100%;text-align:center" href="/app.html">Start free</a>
     </div>
-    <div class="row sb" style="margin-top:16px">
-      ${p?`<button class="danger" onclick="delItem('${p.id}')">Delete</button>`:'<span></span>'}
-      <div class="row"><button class="g" onclick="closeDlg()">Cancel</button>
-      <button class="p" onclick="saveItem('${p?p.id:''}')">Save</button></div>
-    </div>`);
-}
-function saveItem(pid){
-  const name=val('dName').trim(); if(!name) return toast("Name?");
-  const o={qty:+val('dQty')||0, unit:val('dUnit'), low:+val('dLow')||0, name};
-  if(pid){ Object.assign(S.pantry.find(x=>x.id===pid), o); }
-  else { if(findPantry(name)) return toast("Already exists"); S.pantry.push({id:id(),...o}); }
-  autoRestock(); save(); closeDlg(); render();
-}
-function delItem(pid){ S.pantry=S.pantry.filter(x=>x.id!==pid); save(); closeDlg(); render(); }
-
-function addShopItem(){
-  dlg(`<h2>Add to order</h2>
-    <div class="fld"><label>Name</label><input id="dName" placeholder="e.g. Milk"></div>
-    <div class="grid"><div><label>How much</label><input id="dQty" type="number" value="1"></div>
-    <div><label>Unit</label><select id="dUnit">${UNITS.map(u=>`<option>${u}</option>`).join('')}</select></div><div></div></div>
-    <div class="row sb" style="margin-top:16px"><span></span><div class="row">
-    <button class="g" onclick="closeDlg()">Cancel</button>
-    <button class="p" onclick="addToShop(val('dName').trim(),val('dUnit'),+val('dQty')||1);save();closeDlg();render()">Add</button></div></div>`);
-}
-
-// dish editor with per-person ingredients
-function addDish(){
-  window._ing = [{name:"",qty:0,unit:"g"}];
-  window._macro = {kcal:0,protein_g:0,fiber_g:0};
-  window._img = "";
-  renderDishDlg("", "lunch", true);
-}
-function renderDishDlg(name,meal,healthy){
-  const opts = m=>["breakfast","lunch","dinner","snack"].map(x=>`<option ${x===m?'selected':''}>${x}</option>`).join('');
-  const rows = window._ing.map((i,ix)=>`<div class="ingline">
-    <input list="pnames" value="${esc(i.name)}" oninput="_ing[${ix}].name=this.value" placeholder="ingredient">
-    <input type="number" value="${i.qty}" oninput="_ing[${ix}].qty=+this.value" placeholder="qty/person">
-    <select onchange="_ing[${ix}].unit=this.value">${UNITS.map(u=>`<option ${i.unit===u?'selected':''}>${u}</option>`).join('')}</select>
-    <button class="sm danger" onclick="_ing.splice(${ix},1);renderDishDlg(val('mName'),val('mMeal'),document.getElementById('mHealthy').checked)">×</button>
-  </div>`).join('');
-  dlg(`<h2>New dish</h2>
-    <datalist id="pnames">${S.pantry.map(p=>`<option value="${esc(p.name)}">`).join('')}</datalist>
-    <div class="fld"><label>Photo (optional)</label>
-      <div class="row" style="gap:10px;align-items:center">
-        <div class="thumb" id="dishThumb">${window._img?`<img src="${esc(window._img)}">`:'📷'}</div>
-        <input type="file" accept="image/*" onchange="pickDishImage(this)" style="border:none;padding:6px 0"></div></div>
-    <div class="fld"><label>Dish name</label><input id="mName" value="${esc(name)}" placeholder="e.g. Ragi Dosa"></div>
-    <div class="grid"><div><label>Meal</label><select id="mMeal">${opts(meal)}</select></div>
-      <div><label>Healthy?</label><br><input type="checkbox" id="mHealthy" ${healthy?'checked':''} style="width:auto;min-height:auto;transform:scale(1.4)"></div><div></div></div>
-    <label style="margin-top:8px">Ingredients (quantity per person)</label>
-    ${rows}
-    <button class="sm g" onclick="_ing.push({name:'',qty:0,unit:'g'});renderDishDlg(val('mName'),val('mMeal'),document.getElementById('mHealthy').checked)">+ ingredient</button>
-    <label style="margin-top:12px">Nutrition per person (optional — feeds the daily meter)</label>
-    <div class="grid">
-      <div><label>🔥 kcal</label><input type="number" value="${window._macro.kcal||''}" oninput="_macro.kcal=+this.value" placeholder="0"></div>
-      <div><label>💪 protein g</label><input type="number" value="${window._macro.protein_g||''}" oninput="_macro.protein_g=+this.value" placeholder="0"></div>
-      <div><label>🌾 fiber g</label><input type="number" value="${window._macro.fiber_g||''}" oninput="_macro.fiber_g=+this.value" placeholder="0"></div>
+    <div class="plan pro">
+      <span class="tag">Most popular</span>
+      <h3>Longevity Pro</h3>
+      <div class="price">$4.99<small> / month</small></div>
+      <p style="color:var(--mut);font-size:14px">Or $39/year — for the whole household.</p>
+      <ul>
+        <li>Everything in Home</li>
+        <li>Sync across all your devices</li>
+        <li>Weekly plans + macro targets</li>
+        <li>Telegram grocery-order push</li>
+        <li>Unlimited custom recipes + photos</li>
+        <li>New cuisine & seasonal packs</li>
+        <li>Priority support</li>
+      </ul>
+      <a class="btn" style="width:100%;text-align:center" href="/app.html?upgrade=1">Go Pro</a>
     </div>
-    <div class="row sb" style="margin-top:16px"><span></span><div class="row">
-      <button class="g" onclick="closeDlg()">Cancel</button>
-      <button class="p" onclick="saveDish()">Save dish</button></div></div>`);
-}
-function saveDish(){
-  const name=val('mName').trim(); if(!name) return toast("Dish name?");
-  const ing=window._ing.filter(i=>i.name.trim()&&i.qty>0).map(i=>({name:i.name.trim(),qty:+i.qty,unit:i.unit}));
-  if(!ing.length) return toast("Add at least one ingredient");
-  const mc=window._macro||{};
-  S.dishes.push({id:id(),name,meal:val('mMeal'),healthy:document.getElementById('mHealthy').checked,ing,
-    kcal:+mc.kcal||0, protein_g:+mc.protein_g||0, fiber_g:+mc.fiber_g||0, image:window._img||"", veg:true});
-  save(); closeDlg(); toast("Dish saved"); go('meals');
-}
+  </div>
+</div></section>
 
-// ---------- dialog utils ----------
-function dlg(html){ let d=document.getElementById('dlg'); if(!d){ d=document.createElement('dialog'); d.id='dlg'; document.body.appendChild(d);} d.innerHTML=html; d.showModal(); }
-function closeDlg(){ document.getElementById('dlg')?.close(); }
-function val(idv){ return document.getElementById(idv).value; }
-function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+<section id="faq"><div class="wrap" style="max-width:760px">
+  <div class="eyebrow">FAQ</div>
+  <h2>Questions, answered</h2>
+  <div style="margin-top:24px">
+    <details open><summary>How is this different from Mealime or FoodiePrep?</summary><p>Those are excellent generalist planners. Sow's Pantry is built for one job they don't do well: helping families — especially Indian households — move off carb-heavy, white-rice-heavy eating toward protein- and fiber-forward, lower-glycemic meals, with real per-dish nutrition and a pantry-aware grocery list.</p></details>
+    <details><summary>Do I need to be vegetarian?</summary><p>No. Most dishes are veg or egg-based, with a few iconic non-veg options (Bengali fish, tandoori chicken) clearly marked. Filter to what you eat.</p></details>
+    <details><summary>Does it really save money?</summary><p>A pantry-aware list prevents duplicate buys — the biggest quiet source of grocery waste. You shop for what you're missing, not what you already have.</p></details>
+    <details><summary>Which devices work?</summary><p>Any modern phone, tablet or computer. Open it in a browser and "Add to Home Screen" — it installs like a native app and works offline.</p></details>
+    <details><summary>Is my data private?</summary><p>Your pantry and plans are yours. On Pro, they sync privately across your own devices. We don't sell your data.</p></details>
+    <details><summary>Is this medical or nutrition advice?</summary><p>No. Sow's Pantry offers general healthy-eating guidance, not medical advice. If you're diabetic, pregnant, or on medication, confirm targets with a clinician.</p></details>
+  </div>
+</div></section>
 
-// ---------- CLOUD SYNC (Supabase REST, no SDK) ----------
-// One shared row {id, data, updated_at}. Last-write-wins by updated_at. Good enough for a household.
-// ponytail: whole-doc last-write-wins; if two people edit offline at once, newest save wins. Move to
-//           per-field merge only if that actually bites.
-const CFG_KEY = "pantry.sync";
-let CFG = JSON.parse(localStorage.getItem(CFG_KEY) || "null") || {url:"",key:"",house:"home",tgToken:"",tgChat:"",cloudName:"",uploadPreset:""};
-let pushT;
-function sbHeaders(){ return {apikey:CFG.key, Authorization:"Bearer "+CFG.key, "Content-Type":"application/json"}; }
-function syncOn(){ return CFG.url && CFG.key; }
-function setDot(state){ // idle ✓ / syncing … / off ⚙︎ / error ⚠
-  document.getElementById('syncDot').textContent = !syncOn()?'⚙︎':{sync:'…',ok:'✓',err:'⚠'}[state]||'☁︎';
-}
-async function pushState(){
-  if(!syncOn()) return;
-  clearTimeout(pushT);
-  pushT = setTimeout(async()=>{
-    setDot('sync');
-    try{
-      const body=[{id:CFG.house, data:S, updated_at:new Date().toISOString()}];
-      const r=await fetch(`${CFG.url}/rest/v1/state?on_conflict=id`,{method:"POST",
-        headers:{...sbHeaders(), Prefer:"resolution=merge-duplicates"}, body:JSON.stringify(body)});
-      setDot(r.ok?'ok':'err');
-    }catch(e){ setDot('err'); }
-  }, 800);
-}
-async function pullState(force){
-  if(!syncOn()) return;
-  setDot('sync');
-  try{
-    const r=await fetch(`${CFG.url}/rest/v1/state?id=eq.${encodeURIComponent(CFG.house)}&select=data,updated_at`,{headers:sbHeaders()});
-    const rows=await r.json();
-    if(Array.isArray(rows)&&rows[0]&&rows[0].data){
-      const remote=rows[0].updated_at||"", localT=S._t||"";
-      if(force===true || remote>localT){ S=rows[0].data; S._t=remote; localStorage.setItem(KEY,JSON.stringify(S)); render(); toast("↕ Synced from cloud"); }
-    } else if(force===true){ toast("No cloud data yet — this device will be the source"); }
-    setDot('ok');
-  }catch(e){ setDot('err'); }
-}
-// hook save() to also push
-const _save=save;
-save=function(){ S._t=new Date().toISOString(); _save(); pushState(); };
+<div class="wrap"><div class="band">
+  <h2>Get your family off the carb-heavy autopilot</h2>
+  <p class="lead">Start free today. Your first healthy plan is one tap away.</p>
+  <a class="btn big" style="background:#fff;color:var(--gd)" href="/app.html">Open Sow's Pantry →</a>
+</div></div>
 
-function settings(){
-  const sql = "create table if not exists state (id text primary key, data jsonb, updated_at timestamptz);\n"+
-              "alter table state enable row level security;\n"+
-              "create policy anon_all on state for all to anon using (true) with check (true);";
-  dlg(`<h2>☁︎ Sync &amp; setup</h2>
-    <p style="font-size:13px;color:var(--mut);margin-top:0">Share one pantry across Sowndarya's iPad/iPhone and Pavan's Pixel. Free via Supabase.</p>
-    <div class="fld"><label>Supabase Project URL</label><input id="cUrl" value="${esc(CFG.url)}" placeholder="https://xxxx.supabase.co"></div>
-    <div class="fld"><label>Supabase anon key</label><input id="cKey" value="${esc(CFG.key)}" placeholder="eyJhbGciOi..."></div>
-    <div class="fld"><label>Household code (same on all devices)</label><input id="cHouse" value="${esc(CFG.house)}"></div>
-    <div class="row" style="gap:8px"><button class="p" onclick="saveCfg()">Save &amp; sync</button>
-      <button class="g" onclick="pullState(true)">⬇ Use cloud data</button></div>
-    <p style="font-size:11px;color:var(--mut);margin:6px 0 0">Set up your main device first (Save &amp; sync). On other devices, enter the same details then tap <b>Use cloud data</b>.</p>
-    <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-    <p style="font-size:13px;color:var(--mut);margin:0 0 8px">📲 Ping Pavan's phone with the order (Telegram — free, no server).
-      @BotFather → token; message the bot then get chat id.</p>
-    <div class="fld"><label>Telegram bot token</label><input id="cTg" value="${esc(CFG.tgToken)}" placeholder="123456:ABC-..."></div>
-    <div class="fld"><label>Telegram chat id</label><input id="cChat" value="${esc(CFG.tgChat)}" placeholder="e.g. -1001234567890"></div>
-    <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-    <p style="font-size:13px;color:var(--mut);margin:0 0 8px">📷 Dish photos (Cloudinary — free, no server).
-      Create an <b>unsigned</b> upload preset; both values are public-safe.</p>
-    <div class="fld"><label>Cloudinary cloud name</label><input id="cCloud" value="${esc(CFG.cloudName)}" placeholder="e.g. sowndarya-kitchen"></div>
-    <div class="fld"><label>Unsigned upload preset</label><input id="cPreset" value="${esc(CFG.uploadPreset)}" placeholder="e.g. pantry_unsigned"></div>
-    <details style="margin-top:8px"><summary style="font-size:13px;color:var(--g)">First-time DB setup (run once)</summary>
-      <p style="font-size:12px;color:var(--mut)">Supabase → SQL editor → paste &amp; run:</p>
-      <textarea readonly rows="4" style="width:100%;font-size:11px;font-family:monospace">${esc(sql)}</textarea></details>
-    <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-    <div class="row" style="gap:8px"><button class="g" onclick="exportData()">Export backup</button>
-      <button class="g" onclick="importData()">Import</button></div>
-    <div class="row sb" style="margin-top:14px"><span></span><button class="g" onclick="closeDlg()">Close</button></div>`);
-}
-function saveCfg(){ CFG={url:val('cUrl').trim().replace(/\/$/,''), key:val('cKey').trim(), house:val('cHouse').trim()||"home",
-    tgToken:val('cTg').trim(), tgChat:val('cChat').trim(), cloudName:val('cCloud').trim(), uploadPreset:val('cPreset').trim()};
-  localStorage.setItem(CFG_KEY,JSON.stringify(CFG)); closeDlg(); setDot('ok'); pullState().then(pushState); toast("Saved"); }
-// Cloudinary unsigned upload — client-side, no backend, no secret
-async function uploadImage(file){
-  if(!CFG.cloudName||!CFG.uploadPreset){ toast("Set Cloudinary in ⚙︎ first"); return null; }
-  const fd=new FormData(); fd.append('file',file); fd.append('upload_preset',CFG.uploadPreset);
-  try{ const r=await fetch(`https://api.cloudinary.com/v1_1/${CFG.cloudName}/image/upload`,{method:'POST',body:fd});
-    const j=await r.json(); return j.secure_url||null; }
-  catch(e){ toast("Upload failed — offline?"); return null; }
-}
-async function sendTelegram(){
-  if(!CFG.tgToken||!CFG.tgChat) return toast("Set Telegram in ⚙︎ first");
-  const lines=S.shop.filter(s=>!s.checked).map(s=>`• ${s.name} — ${s.need}${s.unit}`).join('\n');
-  const text="🛒 *Grocery order* (Sowndarya's Pantry)\n"+(lines||"(nothing needed)");
-  try{
-    const r=await fetch(`https://api.telegram.org/bot${CFG.tgToken}/sendMessage`,{method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({chat_id:CFG.tgChat, text, parse_mode:"Markdown"})});
-    toast(r.ok?"📲 Sent to Telegram":"Telegram failed — check token/chat id");
-  }catch(e){ toast("Telegram failed — offline?"); }
-}
-function exportData(){ const b=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download="pantry-backup.json"; a.click(); }
-function importData(){ const i=document.createElement('input'); i.type="file"; i.accept=".json";
-  i.onchange=e=>{ const f=e.target.files[0]; const rd=new FileReader(); rd.onload=()=>{ try{ S=JSON.parse(rd.result); save(); render(); toast("Imported"); closeDlg(); }catch(x){ toast("Bad file"); } }; rd.readAsText(f); }; i.click(); }
-
-// ---------- boot ----------
-autoRestock(); _save(); go('meals'); setDot('ok');
-if(syncOn()) pullState();
-document.addEventListener('visibilitychange',()=>{ if(!document.hidden) pullState(); });
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-
-// ---- tiny self-check (open console): verifies cook-deduct + auto-restock math ----
-function _selfTest(){
-  const p={id:'t',name:'TestRice',qty:100,unit:'g',low:30}; S.pantry.push(p);
-  const before=p.qty; const need=20*3;               // 20g/person * 3 ppl
-  p.qty=Math.max(0,before-need);
-  console.assert(p.qty===40, "deduct failed", p.qty);
-  p.qty=20; autoRestock();                            // 20<=30 -> should be on order list
-  console.assert(S.shop.some(s=>s.name==='TestRice'), "restock flag failed");
-  S.pantry=S.pantry.filter(x=>x.id!=='t'); S.shop=S.shop.filter(s=>s.name!=='TestRice');
-  console.log("selfTest ok");
-}
-</script>
+<footer><div class="wrap">
+  <div class="cols">
+    <div><div class="brand" style="color:var(--gd)">🥗 Sow's Pantry</div><div style="margin-top:6px">Health-first meal planning for Indian kitchens.</div></div>
+    <div><a href="#features">Features</a> · <a href="#pricing">Pricing</a> · <a href="#recipes">Recipes</a> · <a href="#faq">FAQ</a></div>
+    <div><a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a> · <a href="mailto:hello@sowspantry.app">Contact</a></div>
+  </div>
+  <p class="disc">Sow's Pantry provides general healthy-eating guidance, not medical advice. Nutrition figures are estimates. © 2026 Sow's Pantry.</p>
+</div></footer>
 </body>
 </html>
