@@ -535,7 +535,7 @@ async function pushState(){
     }catch(e){ setDot('err'); }
   }, 800);
 }
-async function pullState(){
+async function pullState(force){
   if(!syncOn()) return;
   setDot('sync');
   try{
@@ -543,8 +543,8 @@ async function pullState(){
     const rows=await r.json();
     if(Array.isArray(rows)&&rows[0]&&rows[0].data){
       const remote=rows[0].updated_at||"", localT=S._t||"";
-      if(remote>localT){ S=rows[0].data; S._t=remote; localStorage.setItem(KEY,JSON.stringify(S)); render(); toast("↕ Synced from cloud"); }
-    }
+      if(force===true || remote>localT){ S=rows[0].data; S._t=remote; localStorage.setItem(KEY,JSON.stringify(S)); render(); toast("↕ Synced from cloud"); }
+    } else if(force===true){ toast("No cloud data yet — this device will be the source"); }
     setDot('ok');
   }catch(e){ setDot('err'); }
 }
@@ -562,7 +562,8 @@ function settings(){
     <div class="fld"><label>Supabase anon key</label><input id="cKey" value="${esc(CFG.key)}" placeholder="eyJhbGciOi..."></div>
     <div class="fld"><label>Household code (same on all devices)</label><input id="cHouse" value="${esc(CFG.house)}"></div>
     <div class="row" style="gap:8px"><button class="p" onclick="saveCfg()">Save &amp; sync</button>
-      <button class="g" onclick="pullState()">Pull now</button></div>
+      <button class="g" onclick="pullState(true)">⬇ Use cloud data</button></div>
+    <p style="font-size:11px;color:var(--mut);margin:6px 0 0">Set up your main device first (Save &amp; sync). On other devices, enter the same details then tap <b>Use cloud data</b>.</p>
     <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
     <p style="font-size:13px;color:var(--mut);margin:0 0 8px">📲 Ping Pavan's phone with the order (Telegram — free, no server).
       @BotFather → token; message the bot then get chat id.</p>
